@@ -1,0 +1,1509 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>동창회 회비 장부</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#0b0f14; --card:#101824; --line:#1a2533; --txt:#e7eef7; --muted:rgba(231,238,247,.75);
+      --btn:#1c63ff; --btn2:#122a55; --warn:#ffb020; --ok:#6bff9a; --bad:#ff6b6b;
+      --radius:14px;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--txt); }
+    header{ position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line); padding:14px 16px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; }
+    h1{ margin:2px 0; font-size:18px; }
+    main{ max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:12px; }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    @media (max-width: 860px){ .grid2,.grid3{ grid-template-columns:1fr; } }
+
+    input, select, textarea{ width:100%; background:var(--bg); border:1px solid var(--line); color:var(--txt); border-radius:12px; padding:10px 12px; }
+    textarea{ min-height:80px; resize:vertical; }
+    button{ background:var(--btn); border:none; color:white; padding:10px 12px; border-radius:12px; cursor:pointer; }
+    button.secondary{ background:transparent; border:1px solid #2a3a52; color:var(--txt); }
+    button.ghost{ background:transparent; border:1px solid var(--line); color:var(--txt); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .muted{ color:var(--muted); }
+    .tiny{ font-size:12px; }
+    .badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border:1px solid var(--line); border-radius:999px; font-size:12px; background:rgba(255,255,255,.03); }
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tab{ padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--txt); cursor:pointer; }
+    .tab.active{ background:rgba(28,99,255,.2); border-color:rgba(28,99,255,.55); }
+
+    .hidden{ display:none !important; }
+    .split{ display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center; }
+    .hr{ height:1px; background:var(--line); margin:10px 0; }
+
+    .tx{ padding:10px 0; border-bottom:1px solid var(--line); }
+    .memo{ white-space: pre-line; }
+    .memoClamp{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .txTop{ display:flex; gap:10px; justify-content:space-between; align-items:flex-start; }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); font-size:12px; }
+    .linkBtn{ background:transparent; border:1px solid #2a3a52; padding:6px 10px; border-radius:10px; color:var(--txt); cursor:pointer; }
+
+    .statusGrid{ display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:8px; }
+    @media (max-width: 860px){ .statusGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .monthBox{ border:1px solid var(--line); border-radius:12px; padding:10px; background:rgba(255,255,255,.02); }
+    .k{ font-size:12px; opacity:.85; }
+    .v{ font-size:13px; margin-top:4px; }
+    .ok{ color:var(--ok); }
+    .bad{ color:var(--bad); }
+    .warn{ color:var(--warn); }
+
+    .toast{ position:fixed; left:12px; right:12px; bottom:12px; max-width:1100px; margin:0 auto; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(16,24,36,.96); display:none; }
+    .toast.show{ display:block; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .bigMoney{ font-size:36px; font-weight:800; letter-spacing:-0.5px; }
+    @media (max-width: 860px){ .bigMoney{ font-size:30px; } }
+
+    .balanceCenter{ text-align:center; }
+    .balanceHighlight{ display:inline-block; padding:10px 14px; border:1px solid rgba(107,255,154,.35); background:rgba(107,255,154,.08); border-radius:16px; margin-top:6px; }
+    .balanceMeta{ justify-content:center; }
+
+    .file{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border:1px dashed #2a3a52; border-radius:12px; cursor:pointer; }
+    .file input{ display:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>동창회 회비 장부</h1>
+      <div class="muted tiny">회원 로그인 후 열람 가능. 총무만 수정/등록 가능.</div>
+    </div>
+
+    <div style="min-width:340px; max-width:520px; width:520px;">
+      <div class="row" style="justify-content:flex-end;">
+        <span id="roleBadge" class="badge hidden"></span>
+      </div>
+      <div class="row" id="loginRow">
+        <input id="email" type="email" placeholder="이메일" autocomplete="username" />
+        <input id="password" type="password" placeholder="비밀번호" autocomplete="current-password" />
+        <button id="btnLogin">로그인</button>
+      </div>
+      <div class="row hidden" id="logoutRow" style="justify-content:space-between;">
+        <div>
+          <div id="userLabel" class="muted"></div>
+          <div id="uidLabel" class="muted tiny mono"></div>
+        </div>
+        <button id="btnLogout" class="secondary">로그아웃</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" id="lockedCard">
+      <h2>잠금</h2>
+      <p class="muted">회원 공용 계정 또는 총무 계정으로 로그인해 주세요.</p>
+      <ul class="muted">
+        <li>입금 내역은 <b>입금자 공개</b>로 표시됩니다.</li>      <li>영수증 사진은 앱에서 다루지 않고, 네이버 밴드에 업로드합니다.</li>
+      </ul>
+    </section>
+
+    <section class="card hidden" id="appCard">
+      <div class="split">
+        <div class="tabs" id="tabs">
+          <button class="tab active" data-tab="dashboard">대시보드</button>
+          <button class="tab" data-tab="members">회원</button>
+          <button class="tab" data-tab="settings">설정</button>
+          <button class="tab" data-tab="admin">총무입력</button>
+        </div>
+        <div class="row">
+          <span class="muted tiny">읽기전용: 회원</span>
+          <span class="muted tiny">쓰기: 총무</span>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- Dashboard -->
+      <div id="tab-dashboard">
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">잔고</h2>
+            <span id="yearPill" class="pill">올해</span>
+          </div>
+
+          <div class="balanceCenter" style="margin-top:12px;">
+            <div id="balanceHint" class="muted tiny">현재 잔고(기초 잔고 + 올해 입금 - 올해 지출)</div>
+            <div class="balanceHighlight"><div id="balanceBig" class="bigMoney mono">0원</div></div>
+
+            <div class="row balanceMeta" style="margin-top:12px; gap:18px;">
+              <div>
+                <div id="openingTitle" class="muted tiny">기초 잔고</div>
+                <div id="openingLabel" class="mono">0원</div>
+              </div>
+              <div>
+                <div id="inSumTitle" class="muted tiny">입금 합계</div>
+                <div id="inSumLabel" class="mono">0원</div>
+              </div>
+              <div>
+                <div id="outSumTitle" class="muted tiny">지출 합계</div>
+                <div id="outSumLabel" class="mono">0원</div>
+              </div>
+            </div>
+
+            <div class="muted tiny" style="margin-top:10px;">※ 입금/지출 합계는 <b>올해(1/1~12/31)</b>만 집계합니다. 해가 바뀌면 0부터 다시 집계됩니다.</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <div class="split">
+              <div class="row" style="gap:10px;">
+                <h2 style="margin:0;">거래 내역</h2>
+                <span id="txCount" class="muted tiny"></span>
+              </div>
+              <div class="row">
+                <input id="txFilter" placeholder="검색(이름/메모/금액)" style="width:220px;" />
+                <button id="btnRefresh" class="secondary">새로고침</button>
+              </div>
+            </div>
+            <div id="txList" style="margin-top:8px;"></div>
+          </div>
+
+          <div class="card" style="margin:0;">
+            <div class="split">
+              <h2 style="margin:0;">회원 납부 현황</h2>
+              <div class="row">
+                <select id="memberSelect" style="width:220px;"></select>
+                <button id="btnLoadStatus" class="secondary">불러오기</button>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:8px; justify-content:space-between;">
+              <div>
+                <div class="muted tiny">선수금(크레딧)</div>
+                <div id="creditLabel" class="mono">0원</div>
+              </div>
+              <div>
+                <div class="muted tiny">미납 합계(현재 범위)</div>
+                <div id="arrearsLabel" class="mono">0원</div>
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:8px;">
+              <input id="rangeStart" placeholder="시작월 (YYYY-MM)" style="width:160px;" />
+              <input id="rangeEnd" placeholder="종료월 (YYYY-MM)" style="width:160px;" />
+              <button id="btnQuickRange" class="secondary">최근 12개월</button>
+            </div>
+
+            <div id="statusGrid" class="statusGrid" style="margin-top:10px;"></div>
+            <div class="muted tiny" style="margin-top:8px;">상태: <span class="ok">완납</span> / <span class="warn">부분납·미납</span> / <span class="muted">면제</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Members -->
+      <div id="tab-members" class="hidden">
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <div class="split">
+              <h2 style="margin:0;">회원 목록</h2>
+              <button id="btnReloadMembers" class="secondary">새로고침</button>
+            </div>
+            <div id="memberList" style="margin-top:8px;"></div>
+          </div>
+
+          <div class="card" style="margin:0;">
+            <h2 style="margin:0;">회원 관리(총무만)</h2>
+            <p class="muted tiny">회원 ID는 <b>이름 그대로</b> 사용합니다. 동명이인/오타 방지를 위해 입력은 신중하게.</p>
+
+            <div class="grid2">
+              <input id="mName" placeholder="회원 이름(예: 김맹구)" />
+              <input id="mActiveFrom" placeholder="활동 시작월(YYYY-MM)" />
+              <input id="mActiveTo" placeholder="활동 종료월(없으면 비움)" />
+              <button id="btnUpsertMember">회원 저장</button>
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 style="margin:0 0 8px;">회비 면제 기간 추가(총무만)</h3>
+            <div class="grid3">
+              <select id="exMember" ></select>
+              <input id="exFrom" placeholder="면제 시작월(YYYY-MM)" />
+              <input id="exTo" placeholder="면제 종료월(YYYY-MM)" />
+              <input id="exReason" placeholder="사유(예: 개인사정)" />
+              <button id="btnAddExemption">면제 추가</button>
+            </div>
+            <p class="muted tiny">면제는 해당 기간의 월회비 청구를 0원으로 처리합니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div id="tab-settings" class="hidden">
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <h2 style="margin:0;">회비 설정(특정 월부터 적용)</h2>
+            <p class="muted tiny">예: 2026-02부터 25,000원</p>
+
+            <div class="grid2">
+              <input id="feeFrom" placeholder="적용 시작월(YYYY-MM)" />
+              <input id="feeAmount" type="number" placeholder="금액" />
+              <button id="btnAddFee" >설정 추가</button>
+              <button id="btnSaveConfig" class="secondary">저장</button>
+            </div>
+
+            <div id="feeHistory" style="margin-top:10px;"></div>
+            <p class="muted tiny">※ 저장 후, 월 생성/재생성 시 해당 금액이 반영됩니다.</p>
+          </div>
+
+          <div class="card" style="margin:0;">
+            <h2 style="margin:0;">월 생성(총무만)</h2>
+            <p class="muted tiny">FIFO 자동배정을 위해 회원별 월 청구( memberPeriods )를 미리 만들어 둡니다.</p>
+
+            <div class="grid2">
+              <input id="genStart" placeholder="생성 시작월(YYYY-MM)" />
+              <input id="genEnd" placeholder="생성 종료월(YYYY-MM)" />
+              <button id="btnGenForAll">전체 회원 생성</button>
+              <button id="btnGenForOne" class="secondary">선택 회원 생성</button>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <select id="genMember" style="width:220px;"></select>
+              <button id="btnRecalcRange" class="ghost">(주의) 범위 재계산</button>
+            </div>
+            <p class="muted tiny">"재계산"은 면제/회비 변경을 반영해 due를 다시 계산합니다. paid는 유지됩니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div id="tab-admin" class="hidden">
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">입금 등록(총무만)</h2>
+            <span class="muted tiny">참고: “월회비 자동배정(FIFO)”을 선택하면, 입금일과 무관하게 회원의 밀린 회비부터 먼저 자동으로 채웁니다. (예: 12월에 입금했지만 9월부터 미납이면 9월분부터 납부로 처리)</span>
+          </div>
+
+          <div class="grid3" style="margin-top:10px;">
+            <select id="inMember"></select>
+            <input id="inAmount" type="number" placeholder="금액" />
+            <input id="inDate" type="date" />
+            <input id="inMemo" placeholder="메모(선택)" />
+
+            <select id="inMode">
+              <option value="MONTHLY">월회비 자동배정(FIFO)</option>
+              <option value="CREDIT">선수금만 적립(배정 안 함)</option>
+            </select>          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button id="btnAddDeposit">입금 등록</button>
+          </div>
+
+          <p class="muted tiny">※ 경조사 이벤트/갹출(B)은 다음 단계에서 추가합니다. 그때 “경조사 당사자(본인)”를 선택하면, 해당 회원은 자동으로 제외되도록 확장할 예정입니다.</p>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">지출 등록(총무만)</h2>
+            <span class="muted tiny">지출은 거래내역에 <b>지출(OUT)</b>로 기록되고, 잔고에서 자동 차감됩니다. 증빙 사진은 네이버 밴드에 업로드하세요.</span>
+          </div>
+
+          <div class="grid3" style="margin-top:10px;">
+            <select id="outCategory">
+              <option value="MEETING">정기모임</option>
+              <option value="SUMMER">하계야유회</option>
+              <option value="CONDOLENCE">경조사</option>
+              <option value="YEAR_END">송년회</option>
+              <option value="ETC">기타</option>
+            </select>
+            <input id="outAmount" type="number" placeholder="금액" />
+            <input id="outDate" type="date" />
+            <select id="outTargetMember" class="hidden"></select>
+          </div>
+
+          <div style="margin-top:10px;">
+            <textarea id="outMemo" placeholder="메모(상세 지출 내역)&#10;※ 줄바꿈 가능 (예: 식대 / 장소대관 / 음료 등)"></textarea>
+          </div>
+
+          <div class="muted tiny" id="outTargetHint" style="margin-top:8px; display:none;">
+            ※ 경조사(B) 확장 대비: 현재는 지출 기록용으로만 저장하며, 나중에 “경조사 당사자(본인) 제외 갹출”에 사용됩니다.
+          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button id="btnAddExpense">지출 등록</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">잔고/초기화(총무만)</h2>
+            <button id="btnResetMoney" class="ghost" title="개발/테스트용: 금액 관련 데이터만 초기화">금액 데이터 초기화(개발용)</button>
+          </div>
+
+          <p class="muted tiny" style="margin-top:8px;">
+            기초 잔고는 <b>올해 1월 1일 기준</b>으로 저장됩니다. 해가 바뀌면 <b>전년도(12/31) 기말 잔고</b>가 자동으로 <b>새해 기초 잔고</b>로 넘어갑니다.
+          </p>
+
+          <div class="row" style="margin-top:10px;">
+            <input id="openingBalance" type="number" placeholder="올해 기초 잔고(예: 1250000)" style="max-width:320px;" />
+            <button id="btnSaveOpeningBalance">저장</button>
+          </div>
+          <div class="muted tiny" style="margin-top:6px;">※ 기존 엑셀 장부가 있으면, 특정 기준일의 통장 잔액을 ‘기초 잔고’로 입력해 두면 편합니다.</div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    // 에러가 나면(특히 GitHub Pages에서) 화면이 조용히 멈춰 보일 수 있어서,
+    // 초보용으로 오류를 바로 띄우도록 해둡니다.
+    window.addEventListener('error', (e) => {
+      alert('스크립트 오류: ' + (e?.message || e));
+      console.error(e);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      alert('처리되지 않은 오류: ' + (e?.reason?.message || e?.reason || e));
+      console.error(e);
+    });
+    /*********************
+     * 0) Firebase 연결
+     *********************/
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc, getDoc, setDoc, updateDoc,
+      collection, addDoc,
+      query, where, orderBy, limit, getDocs,
+      Timestamp,
+      runTransaction,
+      writeBatch,
+      startAfter
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        // ✅ Firebase 콘솔에서 받은 값으로 교체하세요.
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvsC0w_oGhA6XSYxTRueTXCgBFsxfyAqk",
+      authDomain: "nice67-3d43a.firebaseapp.com",
+      projectId: "nice67-3d43a",
+      storageBucket: "nice67-3d43a.firebasestorage.app",
+      messagingSenderId: "445136711070",
+      appId: "1:445136711070:web:33d2a52b7188446dff3a8f"
+      // measurementId는 이 앱에서 사용하지 않으니 넣지 않아도 됩니다.
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+        /*********************
+     * 1) DOM helpers
+     *********************/
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(()=>toastEl.classList.remove("show"), 2600);
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    function categoryLabel(cat){
+      const map = {
+        MONTHLY_FEE: "월회비",
+        CREDIT: "선수금",
+        MEETING: "정기모임",
+        SUMMER: "하계야유회",
+        CONDOLENCE: "경조사",
+        YEAR_END: "송년회",
+        ETC: "기타"
+      };
+      return map[cat] || String(cat || "");
+    }
+
+    function normalizeName(name){
+      return (name || "").trim().replace(/\s+/g, " ");
+    }
+
+    function fmtWon(n){
+      return Number(n||0).toLocaleString("ko-KR") + "원";
+    }
+
+    function fmtDate(ts){
+      if(!ts) return "";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${dd}`;
+    }
+
+    function ymToNum(ym){
+      const [y,m] = String(ym).split("-").map(Number);
+      return y*100 + m;
+    }
+
+    function numToYm(n){
+      const y = Math.floor(n/100);
+      const m = String(n % 100).padStart(2, "0");
+      return `${y}-${m}`;
+    }
+
+    function ymAddOne(ym){
+      const [y,m] = ym.split("-").map(Number);
+      const d = new Date(y, m-1, 1);
+      d.setMonth(d.getMonth()+1);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    }
+
+    function ymRange(startYm, endYm){
+      const out=[];
+      let cur = startYm;
+      const end = ymToNum(endYm);
+      while(ymToNum(cur) <= end){
+        out.push(cur);
+        cur = ymAddOne(cur);
+      }
+      return out;
+    }
+
+    function isYm(s){
+      return /^\d{4}-\d{2}$/.test(String(s||""));
+    }
+
+    /*********************
+     * 2) 권한(총무 체크)
+     *********************/
+    async function isAdmin(uid){
+      const ref = doc(db, "roles", "admins");
+      const snap = await getDoc(ref);
+      if(!snap.exists()) return false;
+      const uids = snap.data().uids || {};
+      return uids[uid] === true;
+    }
+
+    /*********************
+     * 3) 설정(config)
+     *********************/
+    async function getConfig(){
+      const ref = doc(db, "config", "main");
+      const snap = await getDoc(ref);
+      if(!snap.exists()){
+        // 기본값 생성
+        const base = {
+          openingYear: String(new Date().getFullYear()),
+          openingBalance: 0,
+          feeHistory: [
+            { from: "2025-01", amount: 20000 }
+          ]
+        };
+        await setDoc(ref, base);
+        return base;
+      }
+      const c = snap.data();
+      c.openingYear = String(c.openingYear || new Date().getFullYear());
+      c.openingBalance = Number(c.openingBalance || 0);
+      c.feeHistory = Array.isArray(c.feeHistory) ? c.feeHistory : [];
+      return c;
+    }
+
+    function feeForMonth(feeHistory, ym){
+      const target = ymToNum(ym);
+      let best = null;
+      for(const item of feeHistory){
+        if(!item?.from) continue;
+        if(ymToNum(item.from) <= target){
+          if(!best || ymToNum(item.from) > ymToNum(best.from)) best = item;
+        }
+      }
+      return best ? Number(best.amount || 0) : 0;
+    }
+
+    /*********************
+     * 4) 회원
+     *********************/
+    async function loadMembers(){
+      const qy = query(collection(db, "members"), orderBy("name", "asc"));
+      const snap = await getDocs(qy);
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return list;
+    }
+
+    async function upsertMember({ name, activeFrom, activeTo }){
+      const memberId = normalizeName(name);
+      if(!memberId) throw new Error("이름이 비었습니다.");
+      if(activeFrom && !isYm(activeFrom)) throw new Error("활동 시작월 형식이 올바르지 않습니다.");
+      if(activeTo && !isYm(activeTo)) throw new Error("활동 종료월 형식이 올바르지 않습니다.");
+
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+
+      if(!snap.exists()){
+        await setDoc(ref, {
+          name: memberId,
+          activeFrom: activeFrom || "2024-01",
+          activeTo: activeTo || null,
+          exemptions: []
+        });
+      } else {
+        await updateDoc(ref, {
+          name: memberId,
+          activeFrom: activeFrom || snap.data().activeFrom || "2024-01",
+          activeTo: activeTo || null
+        });
+      }
+
+      return memberId;
+    }
+
+    function isExempt(member, ym){
+      const ex = Array.isArray(member.exemptions) ? member.exemptions : [];
+      const t = ymToNum(ym);
+      for(const it of ex){
+        if(!it?.from || !it?.to) continue;
+        if(ymToNum(it.from) <= t && t <= ymToNum(it.to)) return { yes:true, reason: it.reason || "" };
+      }
+      return { yes:false, reason:"" };
+    }
+
+    async function addExemption({ memberId, from, to, reason }){
+      if(!memberId) throw new Error("회원 선택 필요");
+      if(!isYm(from) || !isYm(to)) throw new Error("면제 기간은 YYYY-MM 형식");
+      if(ymToNum(from) > ymToNum(to)) throw new Error("면제 시작월이 종료월보다 늦습니다.");
+
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error("회원이 존재하지 않습니다.");
+
+      const member = snap.data();
+      const arr = Array.isArray(member.exemptions) ? member.exemptions : [];
+      arr.push({ from, to, reason: reason || "" });
+      await updateDoc(ref, { exemptions: arr });
+    }
+
+    /*********************
+     * 5) memberPeriods 생성/재계산
+     *********************/
+    function inActive(member, ym){
+      const t = ymToNum(ym);
+      const from = member.activeFrom ? ymToNum(member.activeFrom) : ymToNum("1900-01");
+      const to = member.activeTo ? ymToNum(member.activeTo) : ymToNum("2999-12");
+      return from <= t && t <= to;
+    }
+
+    function mpId(memberId, periodId){
+      return `${memberId}__${periodId}`;
+    }
+
+    async function ensureMemberPeriodsForRange({ member, startYm, endYm, recalc=false }){
+      const config = await getConfig();
+      const months = ymRange(startYm, endYm);
+
+      for(const ym of months){
+        if(!inActive(member, ym)) continue;
+
+        const ex = isExempt(member, ym);
+        const due = ex.yes ? 0 : feeForMonth(config.feeHistory, ym);
+        const id = mpId(member.name, ym);
+        const ref = doc(db, "memberPeriods", id);
+        const snap = await getDoc(ref);
+
+        if(!snap.exists()){
+          const paid = 0;
+          const status = ex.yes || due === 0 ? "EXEMPT" : "UNPAID";
+          await setDoc(ref, {
+            memberId: member.name,
+            periodId: ym,
+            due,
+            paid,
+            exempt: ex.yes,
+            exemptReason: ex.reason,
+            status
+          });
+        } else if(recalc) {
+          // due/면제만 재계산, paid는 유지
+          const cur = snap.data();
+          const paid = Number(cur.paid || 0);
+          let status;
+          if(ex.yes || due === 0) status = "EXEMPT";
+          else if(paid >= due) status = "PAID";
+          else if(paid > 0) status = "PARTIAL";
+          else status = "UNPAID";
+
+          await updateDoc(ref, {
+            due,
+            exempt: ex.yes,
+            exemptReason: ex.reason,
+            status
+          });
+        }
+      }
+    }
+
+    /*********************
+     * 6) FIFO 자동배정 + 선수금
+     *********************/
+    async function allocateMonthlyFIFO({ memberId, txId, amount }){
+      const creditRef = doc(db, "credits", memberId);
+
+      // ※ Transaction 안에서는 Query를 직접 읽을 수 없어서(문서 ref만 가능),
+      //    미납 대상(ref 목록)만 밖에서 조회하고, 실제 업데이트는 transaction에서 처리합니다.
+      const unpaidQ = query(
+        collection(db, "memberPeriods"),
+        where("memberId", "==", memberId),
+        where("status", "==", "UNPAID"),
+        orderBy("periodId", "asc")
+      );
+      const partialQ = query(
+        collection(db, "memberPeriods"),
+        where("memberId", "==", memberId),
+        where("status", "==", "PARTIAL"),
+        orderBy("periodId", "asc")
+      );
+
+      const [unpaidSnap, partialSnap] = await Promise.all([
+        getDocs(unpaidQ),
+        getDocs(partialQ)
+      ]);
+
+      const mpRefs = [...unpaidSnap.docs, ...partialSnap.docs]
+        .map(d => d.ref)
+        .sort((a,b) => {
+          const pa = a.id.split("__").pop();
+          const pb = b.id.split("__").pop();
+          return ymToNum(pa) - ymToNum(pb);
+        });
+
+      await runTransaction(db, async (t) => {
+        const creditSnap = await t.get(creditRef);
+        let credit = creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+
+        let remaining = Number(amount) + credit;
+        credit = 0;
+
+        for(const mpRef of mpRefs){
+          if(remaining <= 0) break;
+
+          const mpSnap = await t.get(mpRef);
+          if(!mpSnap.exists()) continue;
+          const mp = mpSnap.data();
+
+          if(mp.exempt) continue;
+          const due = Number(mp.due || 0);
+          const paid = Number(mp.paid || 0);
+          const need = Math.max(0, due - paid);
+          if(need <= 0) continue;
+
+          const use = Math.min(remaining, need);
+          remaining -= use;
+
+          const allocRef = doc(collection(db, "allocations"));
+          t.set(allocRef, {
+            txId,
+            memberId,
+            targetType: "PERIOD",
+            targetId: mp.periodId,
+            amount: use,
+            createdAt: Timestamp.now()
+          });
+
+          const newPaid = paid + use;
+          const newStatus = (newPaid >= due) ? "PAID" : "PARTIAL";
+          t.update(mpRef, { paid: newPaid, status: newStatus });
+        }
+
+        if(remaining > 0){
+          credit = remaining;
+          t.set(creditRef, { balance: credit }, { merge:true });
+
+          const allocRef = doc(collection(db, "allocations"));
+          t.set(allocRef, {
+            txId,
+            memberId,
+            targetType: "CREDIT",
+            targetId: memberId,
+            amount: credit,
+            createdAt: Timestamp.now()
+          });
+        } else {
+          t.set(creditRef, { balance: 0 }, { merge:true });
+        }
+      });
+    }
+
+    async function loadTransactions(){
+      const qy = query(collection(db, "transactions"), orderBy("date", "desc"), limit(120));
+      const snap = await getDocs(qy);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    async function loadTransactionsForYear(year){
+      const y = Number(year);
+      const start = Timestamp.fromDate(new Date(y, 0, 1, 0, 0, 0));
+      const end = Timestamp.fromDate(new Date(y+1, 0, 1, 0, 0, 0));
+
+      const qy = query(
+        collection(db, "transactions"),
+        where("date", ">=", start),
+        where("date", "<", end),
+        orderBy("date", "desc"),
+        limit(1500)
+      );
+      const snap = await getDocs(qy);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    /*********************
+     * 7) 잔고(기초 잔고 + 입금 - 지출)
+     *********************/
+    function calcSums(txList){
+      let inSum = 0;
+      let outSum = 0;
+      for(const tx of txList || []){
+        const amt = Number(tx.amount || 0);
+        if(tx.type === "IN") inSum += amt;
+        else if(tx.type === "OUT") outSum += amt;
+      }
+      return { inSum, outSum };
+    }
+
+    function renderBalance(){
+      const year = new Date().getFullYear();
+      const opening = Number(cachedConfig?.openingBalance || 0);
+      const { inSum, outSum } = calcSums(state.txYear);
+      const balance = opening + inSum - outSum;
+
+      if($("yearPill")) $("yearPill").textContent = `${year}년`;
+      if($("balanceHint")) $("balanceHint").textContent = `${year}년 현재 잔고(기초 잔고 + ${year}년 입금 - ${year}년 지출)`;
+      if($("openingTitle")) $("openingTitle").textContent = `${year}년 기초 잔고(1/1)`;
+      if($("inSumTitle")) $("inSumTitle").textContent = `${year}년 입금 합계`;
+      if($("outSumTitle")) $("outSumTitle").textContent = `${year}년 지출 합계`;
+
+      if($("balanceBig")) $("balanceBig").textContent = fmtWon(balance);
+      if($("openingLabel")) $("openingLabel").textContent = fmtWon(opening);
+      if($("inSumLabel")) $("inSumLabel").textContent = fmtWon(inSum);
+      if($("outSumLabel")) $("outSumLabel").textContent = fmtWon(outSum);
+      if($("openingBalance")) $("openingBalance").value = String(opening || 0);
+    }
+
+    // ✅ 해가 바뀌면 자동으로 '전년도 기말 잔고'를 새해 기초 잔고로 이월
+    async function ensureOpeningForCurrentYear(){
+      const nowYear = new Date().getFullYear();
+      let cfgYear = Number(cachedConfig?.openingYear || nowYear);
+      let opening = Number(cachedConfig?.openingBalance || 0);
+
+      // openingYear가 과거면, 그 해들의 '기말 잔고'를 순차 계산해 새해 기초로 넘깁니다.
+      while(cfgYear < nowYear){
+        const prevTx = await loadTransactionsForYear(cfgYear);
+        const { inSum, outSum } = calcSums(prevTx);
+        opening = opening + inSum - outSum; // cfgYear의 기말 잔고
+        cfgYear += 1;
+      }
+
+      if(String(cachedConfig.openingYear) !== String(nowYear) || Number(cachedConfig.openingBalance) !== Number(opening)){
+        const ref = doc(db, "config", "main");
+        await setDoc(ref, { openingYear: String(nowYear), openingBalance: opening }, { merge:true });
+        cachedConfig.openingYear = String(nowYear);
+        cachedConfig.openingBalance = opening;
+      }
+    }
+
+    async function wipeCollection(colName){
+      // 개발/테스트용 초기화: 문서를 배치로 삭제
+      let last = null;
+      while(true){
+        const base = [collection(db, colName), orderBy("__name__"), limit(450)];
+        const qy = last ? query(...base, startAfter(last)) : query(...base);
+        const snap = await getDocs(qy);
+        if(snap.empty) break;
+
+        const batch = writeBatch(db);
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        last = snap.docs[snap.docs.length - 1];
+      }
+    }
+
+    async function resetMoneyData(){
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const ok = confirm(`[개발/테스트용]
+회원 정보는 유지하고, 금액/거래 관련 데이터만 초기화합니다.
+
+삭제 대상: 거래내역(transactions), 배정내역(allocations), 선수금(credits), 월청구(memberPeriods)
+기초 잔고(openingBalance)는 0으로 초기화됩니다.
+
+진행할까요?`);
+      if(!ok) return;
+
+      toast("초기화 중...");
+      await wipeCollection("transactions");
+      await wipeCollection("allocations");
+      await wipeCollection("credits");
+      await wipeCollection("memberPeriods");
+
+      const ref = doc(db, "config", "main");
+      await setDoc(ref, { openingYear: String(new Date().getFullYear()), openingBalance: 0 }, { merge:true });
+
+      toast("초기화 완료 (월 생성은 다시 해주세요)");
+      await refreshAll();
+      setTab("dashboard");
+    }
+
+    let txDisplayLimit = 30;
+
+    function renderTxList(list){
+      const keyword = ($("txFilter").value || "").trim().toLowerCase();
+      const rows = list.filter(x => {
+        if(!keyword) return true;
+        const hay = [x.memberName, x.memo, x.amount, x.category, x.targetMemberName].join(" ").toLowerCase();
+        return hay.includes(keyword);
+      });
+
+      // 표시 개수 안내
+      if($("txCount")){
+        const shown = Math.min(rows.length, txDisplayLimit);
+        $("txCount").textContent = rows.length ? `(총 ${rows.length}건 중 ${shown}건 표시)` : "";
+      }
+
+      if(rows.length === 0){
+        $("txList").innerHTML = `<div class="muted">내역이 없습니다.</div>`;
+        return;
+      }
+
+      const shownRows = rows.slice(0, txDisplayLimit);
+
+      $("txList").innerHTML = shownRows.map(x => {
+        const type = x.type === "IN" ? "입금" : "지출";
+        const who = x.memberName ? `<span class="pill">${escapeHtml(x.memberName)}</span>` : "";
+        const cat = x.category ? `<span class="pill">${escapeHtml(categoryLabel(x.category))}</span>` : "";
+        const target = x.targetMemberName ? `<span class="pill">당사자: ${escapeHtml(x.targetMemberName)}</span>` : "";
+        const receiptBtn = (x.type === "OUT")
+          ? `<span class="muted tiny">증빙: 네이버 밴드 참고</span>`
+          : ``;
+
+        const memoTxt = String(x.memo || "").trim();
+        const memoBtn = memoTxt
+          ? `<button class="linkBtn tiny" data-action="toggleMemo" data-id="${x.id}">자세히 보기</button>`
+          : ``;
+
+        return `
+          <div class="tx">
+            <div class="txTop">
+              <div><b>${type}</b> ${fmtWon(x.amount)} ${who} ${cat} ${target}</div>
+              <div class="muted">${fmtDate(x.date)}</div>
+            </div>
+            <div id="memo-${x.id}" class="muted memo ${memoTxt ? "memoClamp" : ""}" style="margin-top:6px;">${escapeHtml(x.memo || "")}</div>
+            <div class="row" style="margin-top:8px; justify-content:flex-end; gap:8px;">${memoBtn}${receiptBtn || ""}</div>
+          </div>
+        `;
+      }).join("") + (rows.length > txDisplayLimit ? `
+        <div class="row" style="justify-content:center; padding:10px 0;">
+          <button class="secondary" data-action="moreTx">더 보기(+30)</button>
+        </div>
+      ` : "");
+    }
+
+    /*********************
+     * 8) 회원 현황(월별)
+     *********************/
+    async function loadMemberStatus({ memberId, startYm, endYm }){
+      const qy = query(
+        collection(db, "memberPeriods"),
+        where("memberId","==",memberId),
+        orderBy("periodId","asc")
+      );
+      const snap = await getDocs(qy);
+      const all = snap.docs.map(d => d.data());
+
+      const s = ymToNum(startYm);
+      const e = ymToNum(endYm);
+      const rows = all.filter(x => s <= ymToNum(x.periodId) && ymToNum(x.periodId) <= e);
+
+      const creditSnap = await getDoc(doc(db, "credits", memberId));
+      const credit = creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+
+      return { rows, credit };
+    }
+
+    function renderStatus({ rows, credit, startYm, endYm }){
+      $("creditLabel").textContent = fmtWon(credit);
+
+      let arrears = 0;
+      $("statusGrid").innerHTML = rows.map(x => {
+        const due = Number(x.due||0);
+        const paid = Number(x.paid||0);
+
+        let tag = "";
+        if(x.status === "EXEMPT") tag = `<div class="v muted">면제</div>`;
+        else if(paid >= due) tag = `<div class="v ok">완납</div>`;
+        else if(paid > 0){
+          arrears += (due - paid);
+          tag = `<div class="v warn">부분납</div>`;
+        } else {
+          arrears += due;
+          tag = `<div class="v warn">미납</div>`;
+        }
+
+        const detail = x.status === "EXEMPT"
+          ? `<div class="muted tiny">${escapeHtml(x.exemptReason || "")}</div>`
+          : `<div class="muted tiny">${fmtWon(paid)} / ${fmtWon(due)}</div>`;
+
+        return `
+          <div class="monthBox">
+            <div class="k mono">${escapeHtml(x.periodId)}</div>
+            ${tag}
+            ${detail}
+          </div>
+        `;
+      }).join("") || `<div class="muted">선택 범위에 데이터가 없습니다. (총무: 설정 탭에서 월 생성)</div>`;
+
+      $("arrearsLabel").textContent = fmtWon(arrears);
+    }
+
+    /*********************
+     * 9) 탭/상태 관리
+     *********************/
+    let state = {
+      user: null,
+      admin: false,
+      members: [],
+      tx: [],
+      txYear: []
+    };
+
+    function setTab(name){
+      document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+      ["dashboard","members","settings","admin"].forEach(t => {
+        $("tab-"+t).classList.toggle("hidden", t !== name);
+      });
+    }
+
+    document.querySelectorAll(".tab").forEach(b => {
+      b.addEventListener("click", () => {
+        const target = b.dataset.tab;
+        setTab(target);
+      });
+    });
+
+    function lockUI(loggedIn){
+      $("lockedCard").classList.toggle("hidden", loggedIn);
+      $("appCard").classList.toggle("hidden", !loggedIn);
+      $("loginRow").classList.toggle("hidden", loggedIn);
+      $("logoutRow").classList.toggle("hidden", !loggedIn);
+    }
+
+    function applyRoleBadge(){
+      if(!state.user){
+        $("roleBadge").classList.add("hidden");
+        $("roleBadge").textContent = "";
+        return;
+      }
+      $("roleBadge").classList.remove("hidden");
+      $("roleBadge").textContent = state.admin ? "총무(쓰기 가능)" : "회원(읽기 전용)";
+
+      // 총무 탭은 총무만 의미가 있으니, 비총무는 진입은 가능하지만 입력은 막는다.
+      // (탭 자체 숨기고 싶으면 아래 주석 해제)
+      // document.querySelector('[data-tab="admin"]').classList.toggle('hidden', !state.admin);
+    }
+
+    function syncAdminLocks(){
+      // 총무만 가능한 버튼/입력 비활성화
+      const adminOnlyIds = [
+        "btnAddDeposit","btnAddExpense","btnUpsertMember","btnAddExemption","btnAddFee","btnSaveConfig",
+        "btnGenForAll","btnGenForOne","btnRecalcRange",
+        "btnSaveOpeningBalance","btnResetMoney"
+      ];
+      adminOnlyIds.forEach(id => {
+        const el = $(id);
+        if(el) el.disabled = !state.admin;
+      });
+    }
+
+/*********************
+ * 9.5) 지출 UI(경조사 당사자 선택)
+ *********************/
+function syncOutTargetUI(){
+  const cat = $("outCategory")?.value;
+  const show = cat === "CONDOLENCE";
+  if(!$("outTargetMember")) return;
+
+  $("outTargetMember").classList.toggle("hidden", !show);
+  const hint = $("outTargetHint");
+  if(hint) hint.style.display = show ? "block" : "none";
+}
+
+if($("outCategory")) $("outCategory").addEventListener("change", syncOutTargetUI);
+
+    
+    /*********************
+     * 10) 이벤트 핸들러
+     *********************/
+    $("btnLogin").addEventListener("click", async () => {
+      const email = $("email").value.trim();
+      const pw = $("password").value;
+      if(!email || !pw) return alert("이메일/비밀번호를 입력해주세요.");
+      try{
+        await signInWithEmailAndPassword(auth, email, pw);
+      } catch(e){
+        alert("로그인 실패: 이메일/비밀번호 확인");
+        console.error(e);
+      }
+    });
+
+    $("btnLogout").addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    $("btnRefresh").addEventListener("click", async () => {
+      txDisplayLimit = 30;
+      await refreshConfig();
+      await ensureOpeningForCurrentYear();
+
+      const year = new Date().getFullYear();
+      const [recent, yearTx] = await Promise.all([
+        loadTransactions(),
+        loadTransactionsForYear(year)
+      ]);
+      state.tx = recent;
+      state.txYear = yearTx;
+
+      renderTxList(state.tx);
+      renderBalance();
+      toast("새로고침 완료");
+    });
+
+    $("txFilter").addEventListener("input", () => {
+      txDisplayLimit = 30;
+      renderTxList(state.tx);
+    });
+
+    // 거래내역 메모: 2줄 미리보기 + (자세히 보기/접기)
+    $("txList").addEventListener("click", (e) => {
+      // 더 보기
+      const more = e.target.closest('button[data-action="moreTx"]');
+      if(more){
+        txDisplayLimit += 30;
+        renderTxList(state.tx);
+        return;
+      }
+
+      const btn = e.target.closest('button[data-action="toggleMemo"]');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      const memoEl = document.getElementById(`memo-${id}`);
+      if(!memoEl) return;
+
+      memoEl.classList.toggle("memoClamp");
+      const clamped = memoEl.classList.contains("memoClamp");
+      btn.textContent = clamped ? "자세히 보기" : "접기";
+    });
+
+    $("btnQuickRange").addEventListener("click", () => {
+      const now = new Date();
+      const end = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      let d = new Date(now.getFullYear(), now.getMonth(), 1);
+      d.setMonth(d.getMonth()-11);
+      const start = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      $("rangeStart").value = start;
+      $("rangeEnd").value = end;
+    });
+
+    $("btnLoadStatus").addEventListener("click", async () => {
+      const memberId = $("memberSelect").value;
+      const startYm = $("rangeStart").value.trim();
+      const endYm = $("rangeEnd").value.trim();
+      if(!memberId) return alert("회원을 선택하세요.");
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM 형식입니다.");
+
+      const res = await loadMemberStatus({ memberId, startYm, endYm });
+      renderStatus({ ...res, startYm, endYm });
+    });
+
+    $("btnReloadMembers").addEventListener("click", async () => {
+      await refreshMembers();
+      toast("회원 목록 새로고침");
+    });
+
+    $("btnUpsertMember").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      try{
+        const id = await upsertMember({
+          name: $("mName").value,
+          activeFrom: $("mActiveFrom").value.trim(),
+          activeTo: $("mActiveTo").value.trim()
+        });
+        toast(`회원 저장: ${id}`);
+        $("mName").value = "";
+        $("mActiveFrom").value = "";
+        $("mActiveTo").value = "";
+        await refreshMembers();
+      } catch(e){
+        alert(e.message || String(e));
+      }
+    });
+
+    $("btnAddExemption").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      try{
+        await addExemption({
+          memberId: $("exMember").value,
+          from: $("exFrom").value.trim(),
+          to: $("exTo").value.trim(),
+          reason: $("exReason").value.trim()
+        });
+        toast("면제 추가 완료");
+        $("exFrom").value = "";
+        $("exTo").value = "";
+        $("exReason").value = "";
+        await refreshMembers();
+      } catch(e){
+        alert(e.message || String(e));
+      }
+    });
+
+    // 지출 등록
+$("btnAddExpense").addEventListener("click", async () => {
+  if(!state.admin) return alert("총무만 가능합니다.");
+
+  const category = $("outCategory").value;
+  const amount = Number($("outAmount").value || 0);
+  const dateStr = $("outDate").value;
+  const memo = $("outMemo").value.trim();
+  const targetMemberId = category === "CONDOLENCE" ? $("outTargetMember").value : "";
+
+  if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+  if(!dateStr) return alert("날짜 선택 필요");
+  if(category === "CONDOLENCE" && !targetMemberId) return alert("경조사 당사자(본인)를 선택하세요.");
+
+  const [y,m,d] = dateStr.split("-").map(Number);
+  const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+
+  await addDoc(collection(db, "transactions"), {
+    type: "OUT",
+    category,                 // MEETING / SUMMER / CONDOLENCE / YEAR_END / ETC
+    amount,
+    memo,
+    date,
+
+    // ✅ B 확장 대비(핵심): 경조사 당사자 저장
+    targetMemberId: targetMemberId || null,
+    targetMemberName: targetMemberId || null,
+
+    createdByUid: state.user.uid,
+    createdAt: Timestamp.now()
+  });
+
+  $("outAmount").value = "";
+  $("outMemo").value = "";
+  toast("지출 등록 완료");
+  await refreshAll();
+  setTab("dashboard");
+});
+
+    // 회비 설정
+    let cachedConfig = null;
+
+    function renderFeeHistory(){
+      const list = cachedConfig?.feeHistory || [];
+      if(list.length === 0){
+        $("feeHistory").innerHTML = `<div class="muted">설정이 없습니다.</div>`;
+        return;
+      }
+      const sorted = [...list].sort((a,b)=> ymToNum(a.from)-ymToNum(b.from));
+      $("feeHistory").innerHTML = sorted.map((x,idx)=>`
+        <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:8px 0;">
+          <div class="mono">${escapeHtml(x.from)}부터</div>
+          <div>${fmtWon(x.amount)}</div>
+        </div>
+      `).join("");
+    }
+
+    $("btnAddFee").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const from = $("feeFrom").value.trim();
+      const amount = Number($("feeAmount").value || 0);
+      if(!isYm(from)) return alert("적용 시작월은 YYYY-MM");
+      if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+
+      cachedConfig.feeHistory = Array.isArray(cachedConfig.feeHistory) ? cachedConfig.feeHistory : [];
+      cachedConfig.feeHistory.push({ from, amount });
+      // 중복 from이 있을 수 있으니, 같은 from이면 마지막 값을 사용하도록 정리
+      const map = new Map();
+      for(const it of cachedConfig.feeHistory){
+        if(isYm(it.from)) map.set(it.from, Number(it.amount||0));
+      }
+      cachedConfig.feeHistory = [...map.entries()].map(([f,a])=>({from:f, amount:a}));
+
+      renderFeeHistory();
+      $("feeFrom").value = "";
+      $("feeAmount").value = "";
+      toast("추가됨(저장 버튼을 눌러 확정)");
+    });
+
+    $("btnSaveConfig").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const ref = doc(db, "config", "main");
+      await setDoc(ref, cachedConfig, { merge:true });
+      toast("설정 저장 완료");
+      renderBalance();
+    });
+
+    // 기초 잔고 저장
+    $("btnSaveOpeningBalance").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const v = Number($("openingBalance").value || 0);
+      if(v < 0) return alert("기초 잔고는 0 이상으로 입력해 주세요.");
+
+      const year = String(new Date().getFullYear());
+      const ref = doc(db, "config", "main");
+      await setDoc(ref, { openingYear: year, openingBalance: v }, { merge:true });
+      cachedConfig.openingYear = year;
+      cachedConfig.openingBalance = v;
+
+      toast("기초 잔고 저장 완료");
+      state.txYear = await loadTransactionsForYear(Number(year));
+      renderBalance();
+    });
+
+    // 금액 데이터 초기화(개발용)
+    $("btnResetMoney").addEventListener("click", resetMoneyData);
+
+    // 월 생성
+    $("btnGenForAll").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const startYm = $("genStart").value.trim();
+      const endYm = $("genEnd").value.trim();
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM");
+
+      toast("전체 회원 월 생성 시작...");
+      for(const m of state.members){
+        await ensureMemberPeriodsForRange({ member: m, startYm, endYm, recalc:false });
+      }
+      toast("전체 회원 월 생성 완료");
+    });
+
+    $("btnGenForOne").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const startYm = $("genStart").value.trim();
+      const endYm = $("genEnd").value.trim();
+      const memberId = $("genMember").value;
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM");
+      const member = state.members.find(x => x.name === memberId);
+      if(!member) return alert("회원 선택 필요");
+
+      toast("선택 회원 월 생성...");
+      await ensureMemberPeriodsForRange({ member, startYm, endYm, recalc:false });
+      toast("완료");
+    });
+
+    $("btnRecalcRange").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const startYm = $("genStart").value.trim();
+      const endYm = $("genEnd").value.trim();
+      const memberId = $("genMember").value;
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM");
+      const member = state.members.find(x => x.name === memberId);
+      if(!member) return alert("회원 선택 필요");
+
+      toast("재계산 시작...");
+      await ensureMemberPeriodsForRange({ member, startYm, endYm, recalc:true });
+      toast("재계산 완료");
+    });
+
+    // 입금 등록
+    $("btnAddDeposit").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+
+      const memberId = $("inMember").value;
+      const amount = Number($("inAmount").value || 0);
+      const memo = $("inMemo").value.trim();
+      const dateStr = $("inDate").value;
+      const mode = $("inMode").value;
+
+      if(!memberId) return alert("입금자를 선택하세요.");
+      if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+      if(!dateStr) return alert("날짜 선택 필요");
+
+      const [y,m,d] = dateStr.split("-").map(Number);
+      const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+
+      // 영수증 업로드(선택)
+      // 거래 기록 저장
+      const txRef = await addDoc(collection(db, "transactions"), {
+        type: "IN",
+        category: mode === "MONTHLY" ? "MONTHLY_FEE" : "CREDIT",
+        amount,
+        memberId,
+        memberName: memberId,
+        memo,
+        date,        createdByUid: state.user.uid,
+        createdAt: Timestamp.now()
+      });
+
+      if(mode === "MONTHLY"){
+        // 월 생성이 안 돼있으면 배정 대상이 없을 수 있음
+        // 그래도 credit로 남지 않게 하려면 월 생성 후 다시 배정해야 해서,
+        // 여기서는 배정 시도하고, 대상이 없으면 전부 credit로 남게 된다.
+        await allocateMonthlyFIFO({ memberId, txId: txRef.id, amount });
+      } else {
+        // 선수금만 적립
+        const creditRef = doc(db, "credits", memberId);
+        await runTransaction(db, async (t) => {
+          const snap = await t.get(creditRef);
+          const cur = snap.exists() ? Number(snap.data().balance || 0) : 0;
+          t.set(creditRef, { balance: cur + amount }, { merge:true });
+          const allocRef = doc(collection(db, "allocations"));
+          t.set(allocRef, {
+            txId: txRef.id,
+            memberId,
+            targetType: "CREDIT",
+            targetId: memberId,
+            amount,
+            createdAt: Timestamp.now()
+          });
+        });
+      }
+
+      $("inAmount").value = "";
+      $("inMemo").value = "";
+      toast("입금 등록 완료");
+      await refreshAll();
+    });
+
+    /*********************
+     * 11) 화면 렌더
+     *********************/
+    function fillMemberSelects(){
+  const opts = state.members.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join("");
+  const empty = `<option value="">(선택)</option>`;
+
+  $("memberSelect").innerHTML = empty + opts;
+  $("inMember").innerHTML = empty + opts;
+  $("exMember").innerHTML = empty + opts;
+  $("genMember").innerHTML = empty + opts;
+
+  // 경조사 당사자 선택(지출 기록용)
+  if($("outTargetMember")) $("outTargetMember").innerHTML = empty + opts;
+}
+
+
+    function renderMemberList(){
+      if(state.members.length === 0){
+        $("memberList").innerHTML = `<div class="muted">회원이 없습니다. (총무가 회원을 추가하세요)</div>`;
+        return;
+      }
+
+      $("memberList").innerHTML = state.members.map(m => {
+        const ex = Array.isArray(m.exemptions) ? m.exemptions : [];
+        const exText = ex.length
+          ? ex.map(x => `${x.from}~${x.to}${x.reason?`(${x.reason})`:''}`).join(", ")
+          : "없음";
+
+        return `
+          <div class="tx">
+            <div class="txTop">
+              <div><b>${escapeHtml(m.name)}</b></div>
+              <div class="muted tiny">${escapeHtml(m.activeFrom || "")} ~ ${escapeHtml(m.activeTo || "활동중")}</div>
+            </div>
+            <div class="muted tiny">면제: ${escapeHtml(exText)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function refreshMembers(){
+      state.members = await loadMembers();
+      fillMemberSelects();
+      renderMemberList();
+    }
+
+    async function refreshConfig(){
+      cachedConfig = await getConfig();
+      renderFeeHistory();
+    }
+
+    async function refreshAll(){
+      await Promise.all([
+        refreshMembers(),
+        refreshConfig()
+      ]);
+
+      // ✅ 새해가 되면 자동으로 기초 잔고 이월
+      await ensureOpeningForCurrentYear();
+
+      const year = new Date().getFullYear();
+      const [recent, yearTx] = await Promise.all([
+        loadTransactions(),
+        loadTransactionsForYear(year)
+      ]);
+      state.tx = recent;
+      state.txYear = yearTx;
+      renderTxList(state.tx);
+
+      renderBalance();
+
+      // 기본 범위
+      if(!$("rangeStart").value || !$("rangeEnd").value){
+        $("btnQuickRange").click();
+      }
+
+      // 기본 날짜
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth()+1).padStart(2,"0");
+      const dd = String(now.getDate()).padStart(2,"0");
+      if(!$("inDate").value) $("inDate").value = `${yyyy}-${mm}-${dd}`;
+      if($("outDate") && !$("outDate").value) $("outDate").value = `${yyyy}-${mm}-${dd}`;
+
+      // 월 생성 기본값 (A 추천: 넉넉)
+      if(!$("genStart").value) $("genStart").value = "2024-01";
+      if(!$("genEnd").value) $("genEnd").value = "2026-12";
+    }
+
+    /*********************
+     * 12) Auth state
+     *********************/
+    onAuthStateChanged(auth, async (user) => {
+      state.user = user;
+      if(!user){
+        lockUI(false);
+        state.admin = false;
+        applyRoleBadge();
+        syncAdminLocks();
+        $("userLabel").textContent = "";
+        $("uidLabel").textContent = "";
+        return;
+      }
+
+      lockUI(true);
+      $("userLabel").textContent = user.email || "로그인됨";
+      $("uidLabel").textContent = `UID: ${user.uid}`;
+
+      state.admin = await isAdmin(user.uid);
+      applyRoleBadge();
+      syncAdminLocks();
+
+      await refreshAll();
+      setTab("dashboard");
+      // 경조사(지출) 선택 시 당사자 선택칸 토글 초기화
+      syncOutTargetUI();
+
+      toast(state.admin ? "총무로 로그인" : "회원으로 로그인");
+    });
+
+    // 첫 로드: 잠금 화면 유지
+    lockUI(false);
+  </script>
+</body>
+</html>
