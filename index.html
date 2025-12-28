@@ -1,0 +1,3377 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>육칠회 회비 장부</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#0b0f14; --card:#101824; --line:#1a2533; --txt:#e7eef7; --muted:rgba(231,238,247,.75);
+      --btn:#1c63ff; --btn2:#122a55; --warn:#ffb020; --ok:#6bff9a; --bad:#ff6b6b;
+      --practiceLine: rgba(107,255,154,.65); --practiceBg: rgba(107,255,154,.06);
+}
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--txt); }
+    header{ position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line); padding:14px 16px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; }
+    h1{ margin:2px 0; font-size:18px; }
+    main{ max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:12px; }
+    /* 🔰 연습 모드: 앱 바깥(최상위 카드) 테두리를 녹색으로 */
+    body.practice #appCard{ border-color: var(--practiceLine); }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; }
+.row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    @media (max-width: 860px){ .grid2,.grid3{ grid-template-columns:1fr; } }
+
+    input, select, textarea{ width:100%; background:var(--bg); border:1px solid var(--line); color:var(--txt); border-radius:12px; padding:10px 12px; }
+    textarea{ min-height:80px; resize:vertical; }
+    button{ background:var(--btn); border:none; color:white; padding:10px 12px; border-radius:12px; cursor:pointer; }
+    button.secondary{ background:transparent; border:1px solid #2a3a52; color:var(--txt); }
+    button.ghost{ background:transparent; border:1px solid var(--line); color:var(--txt); }
+    button.danger{ background:rgba(255,107,107,.14); border:1px solid rgba(255,107,107,.55); color:var(--txt); }
+    button.danger:hover{ border-color:rgba(255,107,107,.9); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .muted{ color:var(--muted); }
+    .tiny{ font-size:12px; }
+    .badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border:1px solid var(--line); border-radius:999px; font-size:12px; background:rgba(255,255,255,.03); }
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tab{ padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:transparent; color:var(--txt); cursor:pointer; }
+    .tab.active{ background:rgba(28,99,255,.2); border-color:rgba(28,99,255,.55); }
+
+    .hidden{ display:none !important; }
+    .split{ display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center; }
+    .hr{ height:1px; background:var(--line); margin:10px 0; }
+
+    .tx{ padding:10px 0; border-bottom:1px solid var(--line); }
+    /* 지출(OUT) 줄만 옅은 빨강 틴트 */
+    .tx.outTint{ background:rgba(255,107,107,.07); padding:10px 10px; border-radius:12px; margin:4px 0; }
+    .memo{ white-space: pre-line; }
+    .memoClamp{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .txTop{ display:flex; gap:10px; justify-content:space-between; align-items:flex-start; }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); font-size:12px; }
+    .linkBtn{ background:transparent; border:1px solid #2a3a52; padding:6px 10px; border-radius:10px; color:var(--txt); cursor:pointer; }
+
+    /* 체크박스 기본 width(100%) 예외 처리 */
+    input[type="checkbox"]{ width:auto; padding:0; margin:0; border:none; background:transparent; border-radius:0; appearance:auto; }
+
+    /* 토글 스위치(연습 모드) */
+    .switch{ position:relative; display:inline-flex; width:54px; height:32px; }
+    .switch input{ opacity:0; width:0; height:0; }
+    .switch .slider{ position:absolute; inset:0; cursor:pointer; background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:999px; transition:.18s ease; }
+    .switch .slider:before{ content:""; position:absolute; width:24px; height:24px; left:3px; top:3px; border-radius:999px; background:rgba(231,238,247,.92); transition:.18s ease; }
+    .switch input:checked + .slider{ background:rgba(107,255,154,.18); border-color:rgba(107,255,154,.62); }
+    .switch input:checked + .slider:before{ transform:translateX(22px); background:var(--ok); }
+
+    /* 연도별 월 소계(합계) 줄 */
+    .txSum{ background:rgba(28,99,255,.10); border:1px dashed rgba(28,99,255,.35); padding:10px 10px; border-radius:12px; margin:8px 0; }
+    .txSum .sumLine{ display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center; }
+    .txSum .sumLeft{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .txSum .sumRight{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .txSum .sumNum{ font-weight:800; }
+
+    .statusGrid{ display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:8px; }
+    @media (max-width: 860px){ .statusGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .monthBox{ border:1px solid var(--line); border-radius:12px; padding:10px; background:rgba(255,255,255,.02); }
+    .k{ font-size:12px; opacity:.85; }
+    .v{ font-size:13px; margin-top:4px; }
+    .ok{ color:var(--ok); }
+    .bad{ color:var(--bad); }
+    .warn{ color:var(--warn); }
+
+    .toast{ position:fixed; left:12px; right:12px; bottom:12px; max-width:1100px; margin:0 auto; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(16,24,36,.96); display:none; }
+    .toast.show{ display:block; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .bigMoney{ font-size:36px; font-weight:800; letter-spacing:-0.5px; }
+    @media (max-width: 860px){ .bigMoney{ font-size:30px; } }
+
+    .balanceCenter{ text-align:center; }
+    .balanceHighlight{ display:inline-block; padding:10px 14px; border:1px solid rgba(107,255,154,.35); background:rgba(107,255,154,.08); border-radius:16px; margin-top:6px; }
+    .balanceMeta{ justify-content:center; }
+
+    /* 도움말 모달 */
+    .helpBtn{ background:transparent; border:1px solid #2a3a52; color:var(--txt); padding:6px 10px; border-radius:999px; cursor:pointer; font-size:12px; }
+    .helpBtn:hover{ border-color:rgba(28,99,255,.65); }
+
+    .modalOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:14px; z-index:9999; }
+    @media (min-width: 860px){ .modalOverlay{ align-items:center; } }
+    .modalCard{ width:min(860px, 100%); max-height:min(82vh, 820px); overflow:auto; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; }
+    .modalTitle{ margin:0; font-size:18px; }
+    .modalClose{ background:transparent; border:1px solid var(--line); color:var(--txt); padding:8px 10px; border-radius:12px; cursor:pointer; }
+    .helpH{ margin:14px 0 6px; font-size:14px; }
+    .helpList{ margin:8px 0 0; padding-left:18px; }
+    .helpWarn{ border:1px solid rgba(255,176,32,.35); background:rgba(255,176,32,.08); padding:10px 12px; border-radius:12px; }
+
+    /* 경조사 이벤트(갹출) */
+    .eventBox{ border:1px solid var(--line); border-radius:12px; padding:12px; background:rgba(255,255,255,.02); margin:8px 0; }
+    .progress{ height:8px; background:rgba(255,255,255,.06); border-radius:999px; overflow:hidden; }
+    .progress > div{ height:100%; background:rgba(255,176,32,.85); width:0%; }
+
+    /* 경조사 이벤트: 제외 회원 선택 UI */
+    .checkList{ max-height:160px; overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:rgba(0,0,0,.12); }
+    .checkItem{ display:flex; align-items:center; gap:8px; padding:6px 4px; border-bottom:1px dashed rgba(255,255,255,.08); }
+    .checkItem:last-child{ border-bottom:none; }
+    .checkItem input{ width:auto; }
+
+    .file{ display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border:1px dashed #2a3a52; border-radius:12px; cursor:pointer; }
+    .file input{ display:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>육칠회 회비 장부</h1>
+      <div class="muted tiny">회원 로그인 후 열람 가능. 총무만 수정/등록 가능.</div>
+    </div>
+
+    <div style="min-width:340px; max-width:520px; width:520px;">
+      <div class="row" style="justify-content:flex-end;">
+        <span id="roleBadge" class="badge hidden"></span>
+      </div>
+      <div class="row" id="loginRow">
+        <input id="email" type="email" placeholder="이메일" autocomplete="username" />
+        <input id="password" type="password" placeholder="비밀번호" autocomplete="current-password" />
+        <button id="btnLogin">로그인</button>
+      </div>
+      <div class="row hidden" id="logoutRow" style="justify-content:space-between;">
+        <div>
+          <div id="userLabel" class="muted"></div>
+          <div id="uidLabel" class="muted tiny mono"></div>
+        </div>
+        <button id="btnLogout" class="secondary">로그아웃</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" id="lockedCard">
+      <h2>잠금</h2>
+      <p class="muted">회원 공용 계정 또는 총무 계정으로 로그인해 주세요.</p>
+      <ul class="muted">
+        <li>입금 내역은 <b>입금자 공개</b>로 표시됩니다.</li>      <li>영수증 사진은 앱에서 다루지 않고, 네이버 밴드에 업로드합니다.</li>
+      </ul>
+    </section>
+
+    <section class="card hidden" id="appCard">
+      <div class="split">
+        <div class="tabs" id="tabs">
+          <button class="tab active" data-tab="dashboard">대시보드</button>
+          <button class="tab" data-tab="members">회원</button>
+          <button class="tab" data-tab="settings">설정</button>
+          <button class="tab" data-tab="admin">총무입력</button>
+        </div>
+        <div class="row">
+          <span class="muted tiny">읽기전용: 회원</span>
+          <span class="muted tiny">쓰기: 총무</span>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- Dashboard -->
+      <div id="tab-dashboard">
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">잔고</h2>
+            <span id="yearPill" class="pill">올해</span>
+          </div>
+
+          <div class="balanceCenter" style="margin-top:12px;">
+            <div id="balanceHint" class="muted tiny">현재 잔고(기초 잔고 + 올해 입금 - 올해 지출)</div>
+            <div class="balanceHighlight"><div id="balanceBig" class="bigMoney mono">0원</div></div>
+
+            <div class="row balanceMeta" style="margin-top:12px; gap:18px;">
+              <div>
+                <div id="openingTitle" class="muted tiny">기초 잔고</div>
+                <div id="openingLabel" class="mono">0원</div>
+              </div>
+              <div>
+                <div id="inSumTitle" class="muted tiny">입금 합계</div>
+                <div id="inSumLabel" class="mono">0원</div>
+              </div>
+              <div>
+                <div id="outSumTitle" class="muted tiny">지출 합계</div>
+                <div id="outSumLabel" class="mono">0원</div>
+              </div>
+            </div>
+
+            <div class="muted tiny" style="margin-top:10px;">※ 입금/지출 합계는 <b>올해(1/1~12/31)</b>만 집계합니다. 해가 바뀌면 0부터 다시 집계됩니다.</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <div class="split">
+              <div class="row" style="gap:10px;">
+                <h2 style="margin:0;">거래 내역</h2>
+                <span id="txCount" class="muted tiny"></span>
+              </div>
+              <div class="row">
+                <select id="txViewMode" style="width:140px;">
+                  <option value="RECENT">최근 120건</option>
+                  <option value="YEAR">연도별</option>
+                </select>
+                <select id="txYearSelect" style="width:120px;" class="hidden"></select>
+                <select id="txTypeFilter" style="width:120px;" class="hidden">
+                  <option value="ALL">전체</option>
+                  <option value="IN">입금만</option>
+                  <option value="OUT">지출만</option>
+                </select>
+                <label id="txMonthSumWrap" class="badge hidden" style="cursor:pointer; user-select:none;">
+                  <input id="txMonthSum" type="checkbox" checked />
+                  <span>월별 합계</span>
+                </label>
+                <span id="txViewBadge" class="pill hidden"></span>
+                <input id="txFilter" placeholder="검색(이름/메모/금액)" style="width:220px;" />
+                <button id="btnRefresh" class="secondary">새로고침</button>
+              </div>
+            </div>
+            <div id="txList" style="margin-top:8px;"></div>
+          </div>
+
+          <div class="card" style="margin:0;">
+            <h2 style="margin:0;">회원 납부 현황</h2>
+
+            <div class="row" style="margin-top:8px;">
+              <input id="rangeStart" placeholder="부터날짜 (YYYY-MM)" style="width:160px;" />
+              <input id="rangeEnd" placeholder="까지날짜 (YYYY-MM)" style="width:160px;" />
+              <button id="btnQuickRange" class="secondary">최근 12개월</button>
+            </div>
+
+            <div class="row" style="margin-top:8px;">
+              <select id="memberSelect" style="width:220px;"></select>
+              <button id="btnLoadStatus" class="secondary">불러오기</button>
+            </div>
+
+            <div class="row" style="margin-top:8px; justify-content:space-between;">
+              <div>
+                <div class="muted tiny">선수금</div>
+                <div id="creditLabel" class="mono">0원</div>
+              </div>
+              <div>
+                <div class="muted tiny">미납 합계</div>
+                <div id="arrearsLabel" class="mono bad">0원</div>
+              </div>
+            </div>
+
+            <div id="statusGrid" class="statusGrid" style="margin-top:10px;"></div>
+            <div class="muted tiny" style="margin-top:8px;">상태: <span class="ok">완납</span> / <span class="warn">부분납·미납</span> / <span class="muted">면제</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">경조사 이벤트 / 갹출</h2>
+            <div class="row">
+              <button id="btnReloadEvents" class="secondary">새로고침</button>
+            </div>
+          </div>
+          <div id="eventList" style="margin-top:8px;"></div>
+          <div class="muted tiny" style="margin-top:8px;">※ 총무가 만든 경조사 이벤트별로, 당사자(본인)를 자동 제외한 갹출 납부 현황을 공유합니다.</div>
+        </div>
+      </div>
+
+      <!-- Members -->
+      <div id="tab-members" class="hidden">
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <div class="split">
+              <h2 style="margin:0;">회원 목록</h2>
+              <button id="btnReloadMembers" class="secondary">새로고침</button>
+            </div>
+            <div id="memberList" style="margin-top:8px;"></div>
+          </div>
+
+          <div class="card" style="margin:0;">
+            <h2 style="margin:0;">회원 관리</h2>
+            <p class="muted tiny">회원 ID는 <b>이름 그대로</b> 사용합니다. 동명이인/오타 방지를 위해 입력은 신중하게.</p>
+
+            <div class="grid2">
+              <input id="mName" placeholder="회원 이름(예: 김맹구)" />
+              <input id="mActiveFrom" placeholder="활동 시작월(YYYY-MM)" />
+              <input id="mActiveTo" placeholder="활동 종료월(없으면 비움)" />
+              <button id="btnUpsertMember">회원 저장</button>
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 style="margin:0 0 8px;">회비 면제 기간 추가</h3>
+            <div class="grid3">
+              <select id="exMember" ></select>
+              <input id="exFrom" placeholder="면제 시작월(YYYY-MM)" />
+              <input id="exTo" placeholder="면제 종료월(YYYY-MM)" />
+              <input id="exReason" placeholder="사유(예: 개인사정)" />
+              <button id="btnAddExemption">면제 추가</button>
+            </div>
+            <p class="muted tiny">면제는 해당 기간의 월회비 청구를 0원으로 처리합니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div id="tab-settings" class="hidden">
+
+        <!-- 🔰 연습 모드(총무 전용) -->
+        <div id="practiceToggleWrap" class="card hidden" style="margin:0; border:1px solid var(--practiceLine); background:var(--practiceBg);">
+          <div class="split" style="align-items:flex-start;">
+            <div style="min-width:260px;">
+              <h2 style="margin:0;">🔰 연습 모드 (총무 전용)</h2>
+              <div class="muted tiny" style="margin-top:8px; line-height:1.55;">
+                이 스위치를 켜면 <b>가짜 데이터(Demo)</b> 공간으로 접속합니다.<br/>
+                실제 데이터를 건드리지 않고, 마음껏 입력/삭제 테스트를 할 수 있습니다.<br/>
+                <span class="muted">(인수인계 시 연습용으로 사용하세요. 끄면 실제 장부로 돌아옵니다.)</span>
+              </div>
+              <div class="muted tiny" style="margin-top:10px;">
+                현재 상태: <b id="practiceStatus" class="mono"></b>
+              </div>
+            </div>
+
+            <div class="row" style="justify-content:flex-end; gap:10px;">
+              <label class="switch" title="연습 모드 켜기/끄기">
+                <input id="practiceToggle" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="muted tiny" style="margin-top:10px;">
+            ※ 연습 모드에서는 <b>데모 컬렉션</b>에만 저장됩니다. (계정/권한은 그대로 사용)
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <h2 style="margin:0;">회비 설정(특정 월부터 적용)</h2>
+            <p class="muted tiny">예: 2026-02부터 25,000원</p>
+
+            <div class="grid2">
+              <input id="feeFrom" placeholder="적용 시작월(YYYY-MM)" />
+              <input id="feeAmount" type="number" placeholder="금액" />
+              <button id="btnAddFee" class="secondary">설정 추가</button>
+              <button id="btnSaveConfig">저장</button>
+            </div>
+
+            <div id="feeHistory" style="margin-top:10px;"></div>
+            <p class="muted tiny">※ <b class="bad">저장 버튼을 꼭 눌러야</b>, 월 생성/재생성 시 해당 금액이 반영됩니다.</p>
+          </div>
+
+          <div class="card" style="margin:0;">
+
+<div class="split">
+  <h2 style="margin:0;">월 생성</h2>
+  <button id="btnMonthGenHelp" class="helpBtn" title="월 생성 도움말">도움말 ❔</button>
+</div>
+
+            <p class="muted tiny">FIFO 자동배정을 위해 회원별 월 청구( memberPeriods )를 미리 만들어 둡니다.</p>
+
+            <div class="grid2">
+              <input id="genStart" placeholder="생성 시작월(YYYY-MM)" />
+              <input id="genEnd" placeholder="생성 종료월(YYYY-MM)" />
+              <button id="btnGenForAll">전체 회원 생성</button>
+              <button id="btnGenForOne" class="secondary">선택 회원 생성</button>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <select id="genMember" style="width:220px;"></select>
+              <button id="btnRecalcRange" class="ghost">(주의) 범위 재계산</button>
+            </div>
+            <p class="muted tiny">"재계산"은 면제/회비 변경을 반영해 due를 다시 계산합니다. paid는 유지됩니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin -->
+      <div id="tab-admin" class="hidden">
+
+        <div class="card" style="margin:0;" id="adminEventCard">
+          <div class="split">
+            <h2 style="margin:0;">경조사 이벤트 / 갹출 생성</h2>
+            <span class="muted tiny">‘경조사 회원 본인’을 선택하면 <b>본인은 자동 제외</b>됩니다. 추가로 ‘제외 회원 선택’에서 지정한 회원도 이번 이벤트의 갹출 대상에서 제외됩니다.</span>
+          </div>
+
+          <div class="grid3" style="margin-top:10px;">
+            <input id="evTitle" placeholder="이벤트명(예: 부친상/장인상/자녀결혼)" />
+            <select id="evTargetMember"></select>
+            <input id="evPerAmount" type="number" placeholder="1인당 갹출 금액(예: 100000)" />
+            <input id="evDate" type="date" />
+            <input id="evMemo" placeholder="메모(선택)" />
+          </div>
+
+          <div style="margin-top:10px;">
+            <div class="muted tiny">제외 회원 선택(선택)</div>
+            <div id="evExcludeList" class="checkList"></div>
+            <div class="muted tiny" style="margin-top:6px;">※ 여기서 제외한 회원은 이번 이벤트의 갹출 대상에서 빠집니다. (경조사 회원 본인은 자동 제외)</div>
+          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button id="btnCreateEvent">이벤트 생성(선지출+갹출 생성)</button>
+          </div>
+
+          <p class="muted tiny">생성 시: (1) 회비통장에서 당사자에게 지급한 금액을 <b>지출(OUT)</b>로 기록하고, (2) 회원별 갹출 납부 대상(미납)을 생성합니다.</p>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">입금 등록</h2>
+            <span class="muted tiny">참고: “월회비 자동배정(FIFO)”을 선택하면, 입금일과 무관하게 회원의 밀린 회비부터 먼저 자동으로 채웁니다. (예: 12월에 입금했지만 9월부터 미납이면 9월분부터 납부로 처리)</span>
+          </div>
+
+          <div class="grid3" style="margin-top:10px;">
+            <select id="inMember"></select>
+            <input id="inAmount" type="number" placeholder="금액" />
+            <input id="inDate" type="date" />
+            <input id="inMemo" placeholder="메모(선택)" />
+
+            <select id="inMode">
+              <option value="MONTHLY">월회비 자동배정(FIFO)</option>
+              <option value="EVENT">경조사 이벤트 / 갹출</option>
+              <option value="CREDIT">선수금만 적립(배정 안 함)</option>
+            </select>
+            <select id="inEvent" class="hidden"></select>          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button id="btnAddDeposit">입금 등록</button>
+          </div>
+
+          <p class="muted tiny">※ <b>경조사 이벤트 / 갹출</b> 모드에서는 선택한 이벤트 기준으로 납부를 처리합니다. <b>당사자(본인)는 자동 제외</b>되어, 대상자가 아닌 경우 납부 등록이 막힙니다.</p>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">기타 수입 등록</h2>
+            <span class="muted tiny">예: 예금 이자, 경조사 당사자 찬조금, 회장/회원 찬조금 등 (월회비/갹출과 무관한 수입)</span>
+          </div>
+
+          <div class="grid3" style="margin-top:10px;">
+            <input id="otherInTitle" placeholder="수입내용(예: 예금이자/찬조금)" />
+            <input id="otherInAmount" type="number" placeholder="금액" />
+            <input id="otherInDate" type="date" />
+          </div>
+
+          <div style="margin-top:10px;">
+            <textarea id="otherInMemo" placeholder="메모(선택)&#10;※ 줄바꿈 가능"></textarea>
+          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button id="btnAddOtherIncome">기타 수입 등록</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin:0;">
+          <div class="split">
+            <h2 style="margin:0;">지출 등록</h2>
+            <span class="muted tiny">지출은 거래내역에 <b>지출(OUT)</b>로 기록되고, 잔고에서 자동 차감됩니다. 증빙 사진은 네이버 밴드에 업로드하세요.</span>
+          </div>
+
+          <div class="grid3" style="margin-top:10px;">
+            <select id="outCategory">
+              <option value="MEETING">정기모임</option>
+              <option value="SUMMER">하계야유회</option>
+              <option value="CONDOLENCE">경조사</option>
+              <option value="YEAR_END">송년회</option>
+              <option value="ETC">기타</option>
+            </select>
+            <input id="outAmount" type="number" placeholder="금액" />
+            <input id="outDate" type="date" />
+            <select id="outTargetMember" class="hidden"></select>
+          </div>
+
+          <div style="margin-top:10px;">
+            <textarea id="outMemo" placeholder="메모(상세 지출 내역)&#10;※ 줄바꿈 가능 (예: 식대 / 장소대관 / 음료 등)"></textarea>
+          </div>
+
+          <div class="muted tiny" id="outTargetHint" style="margin-top:8px; display:none;">
+            ※ 경조사 이벤트 / 갹출 확장 대비: 현재는 지출 기록용으로만 저장하며, 나중에 “경조사 당사자(본인) 제외 갹출”에 사용됩니다.
+          </div>
+
+          <div class="row" style="margin-top:10px; justify-content:flex-end;">
+            <button id="btnAddExpense">지출 등록</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin:0;" id="adminResetCard">
+          <div class="split">
+            <h2 style="margin:0;">잔고/초기화</h2>
+            <button id="btnResetMoney" class="ghost" title="개발/테스트용: 금액 관련 데이터만 초기화">금액 데이터 초기화(개발용)</button>
+            <button id="btnRebuildYearStats" class="secondary" title="연도별 입금/지출 합계를 다시 계산">연도 합계 재계산</button>
+          </div>
+
+          <p class="muted tiny" style="margin-top:8px;">
+            기초 잔고는 <b>올해 1월 1일 기준</b>으로 저장됩니다. 해가 바뀌면 <b>전년도(12/31) 기말 잔고</b>가 자동으로 <b>새해 기초 잔고</b>로 넘어갑니다.
+          </p>
+
+          <div class="row" style="margin-top:10px;">
+            <input id="openingBalance" type="number" placeholder="올해 기초 잔고(예: 1250000)" style="max-width:320px;" />
+            <button id="btnSaveOpeningBalance">저장</button>
+          </div>
+          <div class="muted tiny" style="margin-top:6px;">※ 기존 엑셀 장부가 있으면, 특정 기준일의 통장 잔액을 ‘기초 잔고’로 입력해 두면 편합니다.</div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+  <!-- 월 생성 도움말 모달 -->
+  <div id="helpOverlay" class="modalOverlay hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modalCard">
+      <div class="split" style="align-items:center;">
+        <h3 id="helpTitle" class="modalTitle">월 생성 도움말</h3>
+        <button id="btnHelpClose" class="modalClose">닫기</button>
+      </div>
+      <div class="hr"></div>
+      <div id="helpBody" class="muted"></div>
+    </div>
+  </div>
+
+  <!-- 거래내역 롱프레스(길게누름) 액션 모달 -->
+  <div id="txActionOverlay" class="modalOverlay hidden" role="dialog" aria-modal="true" aria-labelledby="txActionTitle">
+    <div class="modalCard">
+      <div class="split" style="align-items:center;">
+        <h3 id="txActionTitle" class="modalTitle">거래 정정/삭제</h3>
+        <button id="btnTxClose" class="modalClose">닫기</button>
+      </div>
+      <div class="hr"></div>
+      <div id="txActionBody" class="muted"></div>
+      <div class="hr"></div>
+      <div class="row" style="justify-content:flex-end; gap:8px;">
+        <button id="btnTxDelete" class="danger">삭제(되돌릴 수 없음)</button>
+      </div>
+      <div class="muted tiny" style="margin-top:10px;">※ 월회비/경조사 납부처럼 배정이 있는 입금은, 관련 배정/선수금/이벤트 집계까지 함께 되돌립니다.</div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module">
+    // 에러가 나면(특히 GitHub Pages에서) 화면이 조용히 멈춰 보일 수 있어서,
+    // 초보용으로 오류를 바로 띄우도록 해둡니다.
+    window.addEventListener('error', (e) => {
+      alert('스크립트 오류: ' + (e?.message || e));
+      console.error(e);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      alert('처리되지 않은 오류: ' + (e?.reason?.message || e?.reason || e));
+      console.error(e);
+    });
+    /*********************
+     * 0) Firebase 연결
+     *********************/
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc, getDoc, setDoc, updateDoc,
+      collection, addDoc,
+      query, where, orderBy, limit, getDocs,
+      Timestamp,
+      runTransaction,
+      writeBatch,
+      startAfter,
+      increment
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        // ✅ Firebase 콘솔에서 받은 값으로 교체하세요.
+    const firebaseConfig = {
+      apiKey: "AIzaSyAvsC0w_oGhA6XSYxTRueTXCgBFsxfyAqk",
+      authDomain: "nice67-3d43a.firebaseapp.com",
+      projectId: "nice67-3d43a",
+      storageBucket: "nice67-3d43a.firebasestorage.app",
+      messagingSenderId: "445136711070",
+      appId: "1:445136711070:web:33d2a52b7188446dff3a8f"
+      // measurementId는 이 앱에서 사용하지 않으니 넣지 않아도 됩니다.
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+        /*********************
+     * 1) DOM helpers
+     *********************/
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+
+    /*********************
+     * 1.1) 🔰 연습 모드(총무 전용)
+     * - type="module"은 strict mode라서, 선언 없이 PRACTICE_MODE에 대입하면 바로 ReferenceError가 납니다.
+     * - 금액/거래 관련 컬렉션은 demo_ 접두사를 붙여 별도 공간으로 분리합니다.
+     *********************/
+    let PRACTICE_MODE = false;
+
+    function configDocId(){
+      return PRACTICE_MODE ? "demo" : "main";
+    }
+
+    function colName(base){
+      // 연습모드에서만 demo_ 컬렉션으로 분리할 대상들
+      const demo = new Set(["transactions","allocations","credits","memberPeriods","events","eventMembers","yearStats"]);
+      if(!PRACTICE_MODE) return base;
+      return demo.has(base) ? `demo_${base}` : base;
+    }
+
+    function syncPracticeUI(){
+      // ✅ 연습 모드일 때 앱의 최상위 박스(#appCard) 테두리를 녹색으로 표시
+      document.body.classList.toggle("practice", !!(state?.user && state?.admin && PRACTICE_MODE));
+
+      const wrap = $("practiceToggleWrap");
+      const tgl = $("practiceToggle");
+      const st = $("practiceStatus");
+      if(!wrap || !tgl || !st) return;
+
+      // 총무만 노출
+      if(!state?.user || !state?.admin){
+        wrap.classList.add("hidden");
+        tgl.checked = false;
+        st.textContent = "";
+        return;
+      }
+
+      wrap.classList.remove("hidden");
+      tgl.checked = !!PRACTICE_MODE;
+      st.classList.remove("ok","warn","bad");
+      if(PRACTICE_MODE){
+        st.classList.add("ok");
+        st.textContent = "ON (Demo)";
+      } else {
+        st.classList.add("muted");
+        st.textContent = "OFF (실제)";
+      }
+    }
+
+    // UI 정리: 총무입력 화면에서 '경조사 이벤트 생성' 카드를 '잔고/초기화' 바로 위로 이동
+    (function reorderAdminCards(){
+      const evCard = document.getElementById("adminEventCard");
+      const resetCard = document.getElementById("adminResetCard");
+      if(evCard && resetCard && resetCard.parentNode){
+        resetCard.parentNode.insertBefore(evCard, resetCard);
+      }
+    })();
+
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      setTimeout(()=>toastEl.classList.remove("show"), 2600);
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    function categoryLabel(cat){
+      const map = {
+        MONTHLY_FEE: "월회비",
+        CREDIT: "선수금",
+        MEETING: "정기모임",
+        SUMMER: "하계야유회",
+        CONDOLENCE: "경조사",
+        CONDOLENCE_CONTRIB: "경조사 이벤트 / 갹출",
+        OTHER_INCOME: "기타 수입",
+        YEAR_END: "송년회",
+        ETC: "기타"
+      };
+      return map[cat] || String(cat || "");
+    }
+
+    function normalizeName(name){
+      return (name || "").trim().replace(/\s+/g, " ");
+    }
+
+    function fmtWon(n){
+      return Number(n||0).toLocaleString("ko-KR") + "원";
+    }
+
+    function fmtDate(ts){
+      if(!ts) return "";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${dd}`;
+    }
+
+    function ymToNum(ym){
+      const [y,m] = String(ym).split("-").map(Number);
+      return y*100 + m;
+    }
+
+    function numToYm(n){
+      const y = Math.floor(n/100);
+      const m = String(n % 100).padStart(2, "0");
+      return `${y}-${m}`;
+    }
+
+    function ymAddOne(ym){
+      const [y,m] = ym.split("-").map(Number);
+      const d = new Date(y, m-1, 1);
+      d.setMonth(d.getMonth()+1);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    }
+
+    function ymRange(startYm, endYm){
+      const out=[];
+      let cur = startYm;
+      const end = ymToNum(endYm);
+      while(ymToNum(cur) <= end){
+        out.push(cur);
+        cur = ymAddOne(cur);
+      }
+      return out;
+    }
+
+    function isYm(s){
+      return /^\d{4}-\d{2}$/.test(String(s||""));
+    }
+
+/*********************
+ * B안) 연도 합계(yearStats) 캐시
+ *********************/
+const yearStatsCache = new Map(); // year -> {inSum,outSum}
+let yearStatsPermissionWarned = false;
+
+function yearStatsRef(year){
+  return doc(db, colName("yearStats"), String(year));
+}
+
+// ✅ yearStats 읽기(캐시 + 안전 처리)
+async function loadYearStats(year, { force=false } = {}){
+  const yNum = Number(year);
+  if(!yNum) return { inSum:0, outSum:0 };
+  const y = String(yNum);
+
+  if(!force && yearStatsCache.has(y)) return yearStatsCache.get(y);
+
+  try{
+    const snap = await getDoc(yearStatsRef(y));
+    const data = snap.exists() ? (snap.data() || {}) : {};
+    const res = { inSum: Number(data.inSum||0), outSum: Number(data.outSum||0) };
+    yearStatsCache.set(y, res);
+    return res;
+  } catch(e){
+    console.error(e);
+    if(!yearStatsPermissionWarned){
+      yearStatsPermissionWarned = true;
+      toast("연도 합계(yearStats) 권한이 없어 합계를 0으로 표시합니다. (Firestore rules 확인 필요)");
+    }
+    const res = { inSum:0, outSum:0 };
+    yearStatsCache.set(y, res);
+    return res;
+  }
+}
+
+
+// ✅ (중요) yearStats는 '지금부터' 누적시키는 캐시라서,
+// 과거에 이미 입력돼 있던 거래들은 합계가 0으로 보일 수 있습니다.
+// 총무가 로그인했을 때 yearStats가 비어 있으면(0/0) 해당 연도를 1회 재계산해 자동으로 채웁니다.
+async function ensureYearStatsBuilt(year){
+  const y = Number(year);
+  const ys = await loadYearStats(y, { force:true });
+
+  // 이미 값이 있으면 그대로 사용
+  if(Number(ys?.inSum||0) !== 0 || Number(ys?.outSum||0) !== 0) return ys;
+
+  // 총무가 아니면(회원) 자동 재계산(쓰기) 시도하지 않음
+  if(!(state && state.admin)) return ys;
+
+  try{
+    const txs = await loadTransactionsForYear(y);
+    if(!txs || txs.length === 0) return ys;
+
+    const sums = calcSums(txs);
+    await setDoc(yearStatsRef(y), { ...sums, rebuiltAt: Timestamp.now() }, { merge:true });
+    yearStatsCache.set(String(y), sums);
+    if(y === new Date().getFullYear()) state.yearStatsCurrent = sums;
+    return sums;
+  } catch(e){
+    console.error(e);
+    return ys;
+  }
+}
+
+function bumpYearStatsInTxn(t, year, { inDelta=0, outDelta=0 } = {}){
+  const ref = yearStatsRef(year);
+  t.set(ref, {
+    inSum: increment(Number(inDelta||0)),
+    outSum: increment(Number(outDelta||0)),
+    updatedAt: Timestamp.now()
+  }, { merge:true });
+}
+
+function yearOf(ts){
+  const d = ts?.toDate ? ts.toDate() : new Date(ts);
+  return d.getFullYear();
+}
+
+function bumpYearStatsInBatch(batch, year, { inDelta=0, outDelta=0 } = {}){
+  const ref = yearStatsRef(year);
+  const payload = { updatedAt: Timestamp.now() };
+  if(inDelta) payload.inSum = increment(Number(inDelta||0));
+  if(outDelta) payload.outSum = increment(Number(outDelta||0));
+  batch.set(ref, payload, { merge:true });
+}
+
+// 화면 즉시 반영(캐시도 같이)
+function bumpYearStatsLocal(year, { inDelta=0, outDelta=0 } = {}){
+  const y = String(year);
+  const base = yearStatsCache.get(y) || state.yearStatsCurrent || { inSum:0, outSum:0 };
+  const next = {
+    inSum: Number(base.inSum||0) + Number(inDelta||0),
+    outSum: Number(base.outSum||0) + Number(outDelta||0),
+  };
+  yearStatsCache.set(y, next);
+  if(String(new Date().getFullYear()) === y){
+    state.yearStatsCurrent = next;
+  }
+}
+
+
+
+    /*********************
+     * 2) 권한(총무 체크)
+     *********************/
+    async function isAdmin(uid){
+      const ref = doc(db, "roles", "admins");
+      const snap = await getDoc(ref);
+      if(!snap.exists()) return false;
+      const uids = snap.data().uids || {};
+      return uids[uid] === true;
+    }
+
+    /*********************
+     * 3) 설정(config)
+     *********************/
+    async function getConfig(){
+      const ref = doc(db, "config", configDocId());
+      const snap = await getDoc(ref);
+      if(!snap.exists()){
+        // 기본값 생성
+        const base = {
+          openingYear: String(new Date().getFullYear()),
+          openingBalance: 0,
+          feeHistory: [
+            { from: "2025-01", amount: 20000 }
+          ]
+        };
+        await setDoc(ref, base);
+        return base;
+      }
+      const c = snap.data();
+      c.openingYear = String(c.openingYear || new Date().getFullYear());
+      c.openingBalance = Number(c.openingBalance || 0);
+      c.feeHistory = Array.isArray(c.feeHistory) ? c.feeHistory : [];
+      return c;
+    }
+
+    function feeForMonth(feeHistory, ym){
+      const target = ymToNum(ym);
+      let best = null;
+      for(const item of feeHistory){
+        if(!item?.from) continue;
+        if(ymToNum(item.from) <= target){
+          if(!best || ymToNum(item.from) > ymToNum(best.from)) best = item;
+        }
+      }
+      return best ? Number(best.amount || 0) : 0;
+    }
+
+    /*********************
+     * 4) 회원
+     *********************/
+    async function loadMembers(){
+      const qy = query(collection(db, "members"), orderBy("name", "asc"));
+      const snap = await getDocs(qy);
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return list;
+    }
+
+    async function upsertMember({ name, activeFrom, activeTo }){
+      const memberId = normalizeName(name);
+      if(!memberId) throw new Error("이름이 비었습니다.");
+      if(activeFrom && !isYm(activeFrom)) throw new Error("활동 시작월 형식이 올바르지 않습니다.");
+      if(activeTo && !isYm(activeTo)) throw new Error("활동 종료월 형식이 올바르지 않습니다.");
+
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+
+      if(!snap.exists()){
+        await setDoc(ref, {
+          name: memberId,
+          activeFrom: activeFrom || "2024-01",
+          activeTo: activeTo || null,
+          exemptions: []
+        });
+      } else {
+        await updateDoc(ref, {
+          name: memberId,
+          activeFrom: activeFrom || snap.data().activeFrom || "2024-01",
+          activeTo: activeTo || null
+        });
+      }
+
+      return memberId;
+    }
+
+    function isExempt(member, ym){
+      const ex = Array.isArray(member.exemptions) ? member.exemptions : [];
+      const t = ymToNum(ym);
+      for(const it of ex){
+        if(!it?.from || !it?.to) continue;
+        if(ymToNum(it.from) <= t && t <= ymToNum(it.to)) return { yes:true, reason: it.reason || "" };
+      }
+      return { yes:false, reason:"" };
+    }
+
+    async function addExemption({ memberId, from, to, reason }){
+      if(!memberId) throw new Error("회원 선택 필요");
+      if(!isYm(from) || !isYm(to)) throw new Error("면제 기간은 YYYY-MM 형식");
+      if(ymToNum(from) > ymToNum(to)) throw new Error("면제 시작월이 종료월보다 늦습니다.");
+
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error("회원이 존재하지 않습니다.");
+
+      const member = snap.data();
+      const arr = Array.isArray(member.exemptions) ? member.exemptions : [];
+      arr.push({ from, to, reason: reason || "" });
+      await updateDoc(ref, { exemptions: arr });
+    }
+
+    async function updateExemptionAt({ memberId, idx, from, to, reason }){
+      if(!memberId) throw new Error("회원 선택 필요");
+      if(idx === null || idx === undefined || idx < 0) throw new Error("수정 대상(인덱스) 없음");
+      if(!isYm(from) || !isYm(to)) throw new Error("면제 기간은 YYYY-MM 형식");
+      if(ymToNum(from) > ymToNum(to)) throw new Error("면제 시작월이 종료월보다 늦습니다.");
+
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error("회원이 존재하지 않습니다.");
+
+      const member = snap.data();
+      const arr = Array.isArray(member.exemptions) ? member.exemptions : [];
+      if(idx >= arr.length) throw new Error("면제 수정 인덱스가 범위를 벗어났습니다.");
+
+      arr[idx] = { from, to, reason: reason || "" };
+      await updateDoc(ref, { exemptions: arr });
+    }
+
+    async function removeExemptionAt({ memberId, idx }){
+      if(!memberId) throw new Error("회원 선택 필요");
+      if(idx === null || idx === undefined || idx < 0) throw new Error("삭제 대상(인덱스) 없음");
+
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error("회원이 존재하지 않습니다.");
+
+      const member = snap.data();
+      const arr = Array.isArray(member.exemptions) ? member.exemptions : [];
+      if(idx >= arr.length) throw new Error("면제 삭제 인덱스가 범위를 벗어났습니다.");
+
+      arr.splice(idx, 1);
+      await updateDoc(ref, { exemptions: arr });
+    }
+
+    async function setMemberActiveTo({ memberId, activeTo }){
+      if(!memberId) throw new Error("회원ID 없음");
+      if(activeTo && !isYm(activeTo)) throw new Error("활동 종료월은 YYYY-MM 형식");
+      const ref = doc(db, "members", memberId);
+      const snap = await getDoc(ref);
+      if(!snap.exists()) throw new Error("회원이 존재하지 않습니다.");
+      await updateDoc(ref, { activeTo: activeTo || null });
+    }
+
+    /*********************
+     * 5) memberPeriods 생성/재계산
+     *********************/
+    function inActive(member, ym){
+      const t = ymToNum(ym);
+      const from = member.activeFrom ? ymToNum(member.activeFrom) : ymToNum("1900-01");
+      const to = member.activeTo ? ymToNum(member.activeTo) : ymToNum("2999-12");
+      return from <= t && t <= to;
+    }
+
+    function mpId(memberId, periodId){
+      return `${memberId}__${periodId}`;
+    }
+
+    async function ensureMemberPeriodsForRange({ member, startYm, endYm, recalc=false }){
+      const config = await getConfig();
+      const months = ymRange(startYm, endYm);
+
+      for(const ym of months){
+        if(!inActive(member, ym)) continue;
+
+        const ex = isExempt(member, ym);
+        const due = ex.yes ? 0 : feeForMonth(config.feeHistory, ym);
+        const id = mpId(member.name, ym);
+        const ref = doc(db, colName("memberPeriods"), id);
+        const snap = await getDoc(ref);
+
+        if(!snap.exists()){
+          const paid = 0;
+          const status = ex.yes ? "EXEMPT" : (due === 0 ? "PAID" : "UNPAID");
+          await setDoc(ref, {
+            memberId: member.name,
+            periodId: ym,
+            due,
+            paid,
+            exempt: ex.yes,
+            exemptReason: ex.reason,
+            status
+          });
+        } else if(recalc) {
+          // due/면제만 재계산, paid는 유지
+          const cur = snap.data();
+          const paid = Number(cur.paid || 0);
+          let status;
+          if(ex.yes) status = "EXEMPT";
+          else if(due === 0) status = "PAID";
+          else if(paid >= due) status = "PAID";
+          else if(paid > 0) status = "PARTIAL";
+          else status = "UNPAID";
+
+          await updateDoc(ref, {
+            due,
+            exempt: ex.yes,
+            exemptReason: ex.reason,
+            status
+          });
+        }
+      }
+    }
+
+    /*********************
+     * 6) FIFO 자동배정 + 선수금
+     *********************/
+    async function allocateMonthlyFIFO({ memberId, txId, amount }){
+      if(!memberId) throw new Error("memberId 없음");
+      if(!txId) throw new Error("txId 없음");
+      const amt = Number(amount || 0);
+      if(!amt || amt <= 0) return;
+
+      // ✅ 인덱스 없이도 동작: memberId로 전부 읽고, JS에서 미납/부분납만 골라 기간순 정렬
+      const allQ = query(
+        collection(db, colName("memberPeriods")),
+        where("memberId", "==", memberId)
+      );
+      const allSnap = await getDocs(allQ);
+
+      const mpRefs = allSnap.docs
+        .filter(d => {
+          const st = d.data()?.status;
+          return st === "UNPAID" || st === "PARTIAL";
+        })
+        .map(d => d.ref)
+        .sort((a,b) => {
+          const pa = a.id.split("__").pop();
+          const pb = b.id.split("__").pop();
+          return ymToNum(pa) - ymToNum(pb);
+        });
+
+      const txRef = doc(db, colName("transactions"), txId);
+      const creditRef = doc(db, colName("credits"), memberId);
+
+      await runTransaction(db, async (t) => {
+        // ✅ Firestore 트랜잭션 규칙: 모든 읽기 → 모든 쓰기
+        const txSnap = await t.get(txRef);
+        if(!txSnap.exists()) throw new Error("거래(tx)가 존재하지 않습니다.");
+
+        const mpSnaps = mpRefs.length ? await Promise.all(mpRefs.map(r => t.get(r))) : [];
+        const creditSnap = await t.get(creditRef);
+
+        let remaining = amt;
+        const now = Timestamp.now();
+
+        // (1) 월회비 FIFO 배정: 미납/부분납 월부터
+        for(let i=0; i<mpRefs.length && remaining>0; i++){
+          const snap = mpSnaps[i];
+          if(!snap.exists()) continue;
+          const mp = snap.data();
+          if(mp.exempt) continue;
+
+          const due = Number(mp.due || 0);
+          const paid = Number(mp.paid || 0);
+          const need = Math.max(0, due - paid);
+          if(need <= 0) continue;
+
+          const use = Math.min(remaining, need);
+          const newPaid = paid + use;
+          const newStatus = (newPaid >= due) ? "PAID" : "PARTIAL";
+
+          t.update(mpRefs[i], { paid: newPaid, status: newStatus });
+
+          const allocRef = doc(collection(db, colName("allocations")));
+          t.set(allocRef, {
+            txId,
+            memberId,
+            targetType: "PERIOD",
+            targetId: mp.periodId,
+            periodId: mp.periodId,
+            amount: use,
+            createdAt: now
+          });
+
+          remaining -= use;
+        }
+
+        // (2) 남는 돈은 선수금(크레딧)
+        if(remaining > 0){
+          const cur = creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+          t.set(creditRef, { balance: cur + remaining }, { merge:true });
+
+          const allocRef = doc(collection(db, colName("allocations")));
+          t.set(allocRef, {
+            txId,
+            memberId,
+            targetType: "CREDIT",
+            targetId: memberId,
+            amount: remaining,
+            createdAt: now
+          });
+        }
+      });
+    }
+
+    async function loadTransactions(){
+      const qy = query(collection(db, colName("transactions")), orderBy("date", "desc"), limit(120));
+      const snap = await getDocs(qy);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    async function loadTransactionsForYear(year){
+      const y = Number(year);
+      const start = Timestamp.fromDate(new Date(y, 0, 1, 0, 0, 0));
+      const end = Timestamp.fromDate(new Date(y+1, 0, 1, 0, 0, 0));
+
+      const qy = query(
+        collection(db, colName("transactions")),
+        where("date", ">=", start),
+        where("date", "<", end),
+        orderBy("date", "desc"),
+        limit(1500)
+      );
+      const snap = await getDocs(qy);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    /*********************
+     * 6.3) 거래 삭제(정정): 배정/선수금/경조사 집계 되돌리기
+     *********************/
+    async function deleteTransactionWithRollback(txId){
+      if(!state.admin) throw new Error("총무만 가능합니다.");
+      if(!txId) throw new Error("txId 없음");
+
+      // ✅ tx/allocations는 트랜잭션 밖에서 읽어둡니다(규칙 + 성능)
+      const txRef = doc(db, colName("transactions"), txId);
+      const txSnap = await getDoc(txRef);
+      if(!txSnap.exists()) throw new Error("거래가 존재하지 않습니다.");
+      const tx = { id: txSnap.id, ...txSnap.data() };
+
+      // 경조사 이벤트 생성 시 자동 생성된 선지출(OUT)은 삭제 금지(이벤트 구조가 깨짐)
+      if(tx.type === "OUT" && tx.category === "CONDOLENCE" && tx.eventId && String(tx.memo||"").includes("[경조사 선지출]")){
+        throw new Error(`이 거래는 '경조사 이벤트 생성'으로 자동 생성된 선지출입니다.
+이벤트 기록과 연결돼 있어 삭제를 막아두었습니다.`);
+      }
+
+      const allocQ = query(collection(db, colName("allocations")), where("txId", "==", txId));
+      const allocSnap = await getDocs(allocQ);
+      const allocDocs = allocSnap.docs.map(d => ({ ref:d.ref, data:d.data() }));
+
+      const memberId = tx.memberId || tx.memberName || null;
+      const creditRef = memberId ? doc(db, colName("credits"), memberId) : null;
+
+      // 월회비(PERIOD) 되돌림 준비
+      const periodAllocs = allocDocs
+        .filter(a => a.data?.targetType === "PERIOD")
+        .map(a => ({
+          memberId: a.data?.memberId || memberId,
+          periodId: a.data?.targetId,
+          amount: Number(a.data?.amount || 0)
+        }))
+        .filter(x => x.memberId && x.periodId && x.amount > 0);
+
+      // credit(선수금) 되돌림 준비: allocations 기준(가장 신뢰)
+      const creditFromAlloc = allocDocs
+        .filter(a => a.data?.targetType === "CREDIT")
+        .reduce((s,a)=> s + Number(a.data?.amount || 0), 0);
+
+      // 경조사(EVENT) 되돌림 준비
+      const eventAlloc = allocDocs.find(a => a.data?.targetType === "EVENT");
+      const eventApplied = Number(eventAlloc?.data?.amount || tx.eventAppliedAmount || 0);
+
+      const txYear = yearOf(tx.date);
+
+      await runTransaction(db, async (t) => {
+        // ✅ Firestore 트랜잭션 규칙: 모든 읽기 → 모든 쓰기
+
+        // 1) refs 수집(중복 제거)
+        const mpRefMap = new Map();
+        for(const it of periodAllocs){
+          const id = `${it.memberId}__${it.periodId}`;
+          if(!mpRefMap.has(id)) mpRefMap.set(id, doc(db, colName("memberPeriods"), id));
+        }
+        const mpRefs = [...mpRefMap.values()];
+
+        let eventRef = null;
+        let emRef = null;
+        if(tx.type === "IN" && tx.category === "CONDOLENCE_CONTRIB"){
+          if(!tx.eventId) throw new Error("이 거래는 경조사 납부인데 eventId가 없습니다.");
+          if(!memberId) throw new Error("이 거래는 경조사 납부인데 memberId가 없습니다.");
+          eventRef = doc(db, colName("events"), tx.eventId);
+          emRef = doc(db, colName("eventMembers"), `${tx.eventId}__${memberId}`);
+        }
+
+        // 2) ✅ 읽기
+        const mpSnaps = mpRefs.length ? await Promise.all(mpRefs.map(r => t.get(r))) : [];
+        const mpSnapById = new Map();
+        mpRefs.forEach((r, i) => mpSnapById.set(r.id, mpSnaps[i]));
+
+        const creditSnap = creditRef ? await t.get(creditRef) : null;
+        const evSnap = eventRef ? await t.get(eventRef) : null;
+        const emSnap = emRef ? await t.get(emRef) : null;
+
+        // 3) ✅ 쓰기
+        if(tx.type === "IN"){
+          // (A) 월회비: PERIOD paid 되돌리기 + 남은 선수금 되돌리기
+          if(tx.category === "MONTHLY_FEE"){
+            for(const it of periodAllocs){
+              const id = `${it.memberId}__${it.periodId}`;
+              const mpRef = doc(db, colName("memberPeriods"), id);
+              const snap = mpSnapById.get(mpRef.id);
+              if(!snap || !snap.exists()) continue;
+              const mp = snap.data();
+              if(mp.exempt) continue;
+
+              const due = Number(mp.due||0);
+              const paid = Number(mp.paid||0);
+              const dec = Number(it.amount||0);
+
+              const newPaid = Math.max(0, paid - dec);
+              let newStatus;
+              if(mp.exempt) newStatus = "EXEMPT";
+              else if(due === 0) newStatus = "PAID";
+              else if(newPaid >= due) newStatus = "PAID";
+              else if(newPaid > 0) newStatus = "PARTIAL";
+              else newStatus = "UNPAID";
+
+              t.update(mpRef, { paid:newPaid, status:newStatus });
+            }
+
+            if(creditFromAlloc > 0 && creditRef){
+              const cur = creditSnap && creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+              t.set(creditRef, { balance: Math.max(0, cur - creditFromAlloc) }, { merge:true });
+            }
+          }
+
+          // (B) 선수금만 적립(IN: CREDIT)
+          if(tx.category === "CREDIT"){
+            if(creditRef){
+              const cur = creditSnap && creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+              t.set(creditRef, { balance: Math.max(0, cur - Number(tx.amount||0)) }, { merge:true });
+            }
+          }
+
+          // (C) 경조사 납부(IN: CONDOLENCE_CONTRIB)
+          if(tx.category === "CONDOLENCE_CONTRIB"){
+            if(!evSnap || !evSnap.exists()) throw new Error("이벤트가 존재하지 않습니다.");
+            if(!emSnap || !emSnap.exists()) throw new Error("이벤트 멤버 기록이 없습니다.");
+
+            const ev = evSnap.data();
+            const em = emSnap.data();
+
+            const use = eventApplied;
+            const extra = creditFromAlloc || Number(tx.creditAddedAmount || 0);
+
+            const due = Number(em.due||0);
+            const paid = Number(em.paid||0);
+            const prevStatus = em.status || (paid >= due ? "PAID" : (paid>0?"PARTIAL":"UNPAID"));
+
+            const newPaid = Math.max(0, paid - use);
+            let newStatus;
+            if(newPaid >= due) newStatus = "PAID";
+            else if(newPaid > 0) newStatus = "PARTIAL";
+            else newStatus = "UNPAID";
+
+            t.update(emRef, { paid:newPaid, status:newStatus });
+
+            let paidSum = Number(ev.paidSum || 0);
+            paidSum = Math.max(0, paidSum - use);
+
+            let unpaidCount = Number(ev.unpaidCount || 0);
+            if(prevStatus === "PAID" && newStatus !== "PAID") unpaidCount = unpaidCount + 1;
+
+            const newEventStatus = (unpaidCount === 0) ? "CLOSED" : "OPEN";
+            t.update(eventRef, { paidSum, unpaidCount, status:newEventStatus, updatedAt: Timestamp.now() });
+
+            if(extra > 0 && creditRef){
+              const cur = creditSnap && creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+              t.set(creditRef, { balance: Math.max(0, cur - extra) }, { merge:true });
+            }
+          }
+        }
+
+        // ✅ yearStats 되돌리기(거래 삭제 반영)
+        if(tx.type === "IN") bumpYearStatsInTxn(t, txYear, { inDelta: -Number(tx.amount||0) });
+        else if(tx.type === "OUT") bumpYearStatsInTxn(t, txYear, { outDelta: -Number(tx.amount||0) });
+
+        // allocations 삭제
+        for(const a of allocDocs){
+          t.delete(a.ref);
+        }
+
+        // 거래 삭제
+        t.delete(txRef);
+      });
+    }
+
+    $("btnTxDelete")?.addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const txId = txLongPressTargetId;
+      if(!txId) return;
+
+      const ok = confirm(`이 거래를 삭제(정정)할까요?
+
+- 삭제는 되돌릴 수 없습니다.
+- 월회비/경조사 납부는 관련 배정/선수금/집계도 함께 되돌립니다.`);
+      if(!ok) return;
+
+      try{
+        toast("삭제 처리 중...");
+        await deleteTransactionWithRollback(txId);
+        toast("삭제 완료");
+        closeTxActionOverlay();
+        await refreshAll();
+        setTab("dashboard");
+      } catch(e){
+        alert(e?.message || String(e));
+        console.error(e);
+      }
+    });
+
+    /*********************
+     * 6.7) 경조사 이벤트 / 갹출
+     *********************/
+    function eventMemberDocId(eventId, memberId){
+      return `${eventId}__${memberId}`;
+    }
+
+    async function loadEvents(){
+      const qy = query(collection(db, colName("events")), orderBy("date", "desc"), limit(60));
+      const snap = await getDocs(qy);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    async function loadEventMembers(eventId){
+      const qy = query(collection(db, colName("eventMembers")), where("eventId","==",eventId));
+      const snap = await getDocs(qy);
+      const rows = snap.docs.map(d => d.data());
+      rows.sort((a,b)=> String(a.memberId||"").localeCompare(String(b.memberId||""), "ko"));
+      return rows;
+    }
+
+    const eventMembersCache = new Map(); // eventId -> rows
+
+    function fillEventSelects(){
+      const el = $("inEvent");
+      if(!el) return;
+      const empty = `<option value="">(경조사 이벤트 선택)</option>`;
+      const openEvents = (state.events || []).filter(e => (e.status || "OPEN") !== "CLOSED");
+      const opts = openEvents.map(e => {
+        const title = e.title || "경조사";
+        const target = e.targetMemberName ? ` / 당사자:${e.targetMemberName}` : "";
+        return `<option value="${escapeHtml(e.id)}">${escapeHtml(title)}${escapeHtml(target)}</option>`;
+      }).join("");
+      el.innerHTML = empty + opts;
+    }
+
+    function renderEventList(){
+      const box = $("eventList");
+      if(!box) return;
+
+      const list = state.events || [];
+      if(list.length === 0){
+        box.innerHTML = `<div class="muted">등록된 경조사 이벤트가 없습니다.</div>`;
+        return;
+      }
+
+      box.innerHTML = list.map(ev => {
+        const title = ev.title || "경조사";
+        const target = ev.targetMemberName || "";
+        const per = Number(ev.perPersonAmount || 0);
+        const total = Number(ev.totalDue || 0);
+        const paid = Number(ev.paidSum || 0);
+        const unpaidCount = Number(ev.unpaidCount || 0);
+        const pct = total > 0 ? Math.max(0, Math.min(100, Math.round((paid/total)*100))) : 0;
+        const st = (ev.status || "OPEN") === "CLOSED"
+          ? `<span class="ok">완료</span>`
+          : `<span class="warn">진행중</span>`;
+
+        return `
+          <div class="eventBox">
+            <div class="split">
+              <div class="row" style="gap:8px;">
+                <b>${escapeHtml(title)}</b>
+                <span class="pill">당사자: ${escapeHtml(target)}</span>
+                <span class="pill">1인 ${fmtWon(per)}</span>
+                <span class="pill">${st}</span>
+              </div>
+              <div class="muted">${fmtDate(ev.date)}</div>
+            </div>
+            <div class="progress" style="margin-top:10px;"><div style="width:${pct}%;"></div></div>
+            <div class="row" style="margin-top:10px; justify-content:space-between;">
+              <div class="muted tiny">모금 ${fmtWon(paid)} / ${fmtWon(total)} · 미납 ${unpaidCount}명</div>
+              <button class="linkBtn tiny" data-action="toggleEvent" data-id="${escapeHtml(ev.id)}">자세히 보기</button>
+            </div>
+            <div id="evDetail-${escapeHtml(ev.id)}" class="hidden" style="margin-top:10px;"></div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function refreshEvents(){
+      state.events = await loadEvents();
+      fillEventSelects();
+      renderEventList();
+    }
+
+    async function createCondolenceEvent({ title, targetMemberId, excludedMemberIds = [], perPersonAmount, dateStr, memo }){
+      if(!state.admin) throw new Error("총무만 가능합니다.");
+      if(!targetMemberId) throw new Error("경조사 당사자(본인) 선택 필요");
+      const per = Number(perPersonAmount || 0);
+      if(!per || per <= 0) throw new Error("1인당 갹출 금액을 확인하세요.");
+      if(!dateStr) throw new Error("날짜 선택 필요");
+
+      const ym = String(dateStr).slice(0,7);
+      if(!isYm(ym)) throw new Error("날짜 형식 오류");
+
+      const excludesArr = Array.isArray(excludedMemberIds) ? excludedMemberIds : [];
+      const excludeSet = new Set(excludesArr.filter(x => x && x !== targetMemberId));
+
+      const participants = (state.members || [])
+        .filter(m => inActive(m, ym))
+        .map(m => m.name)
+        .filter(n => n && n !== targetMemberId && !excludeSet.has(n));
+
+      if(participants.length === 0) throw new Error("갹출 대상 회원이 없습니다.");
+
+      const excludedFinal = [...excludeSet];
+      const totalDue = per * participants.length;
+      const [y,m,d] = dateStr.split("-").map(Number);
+      const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+
+      const batch = writeBatch(db);
+      const eventRef = doc(collection(db, colName("events")));
+      const payoutTxRef = doc(collection(db, colName("transactions")));
+
+      batch.set(eventRef, {
+        type: "CONDOLENCE",
+        title: (title || "경조사").trim(),
+        targetMemberId,
+        targetMemberName: targetMemberId,
+        excludedMemberIds: excludedFinal,
+        excludedCount: excludedFinal.length,
+        perPersonAmount: per,
+        participantCount: participants.length,
+        participants,
+        totalDue,
+        paidSum: 0,
+        unpaidCount: participants.length,
+        status: "OPEN",
+        memo: memo || "",
+        date,
+        payoutTxId: payoutTxRef.id,
+        createdByUid: state.user.uid,
+        createdAt: Timestamp.now()
+      });
+
+      // ✅ 선지출(OUT): 총액(당사자 제외 인원 * 1인당 금액)
+      const exclText = excludedFinal.length ? ` / 제외:${excludedFinal.join(",")}` : "";
+      const payoutMemo = `[경조사 선지출] ${title || "경조사"} / 당사자:${targetMemberId}${exclText}${memo?`
+${memo}`:""}`;
+      batch.set(payoutTxRef, {
+        type: "OUT",
+        category: "CONDOLENCE",
+        amount: totalDue,
+        memo: payoutMemo,
+        date,
+        targetMemberId,
+        targetMemberName: targetMemberId,
+        eventId: eventRef.id,
+        eventTitle: (title || "경조사").trim(),
+        createdByUid: state.user.uid,
+        createdAt: Timestamp.now()
+      });
+
+      bumpYearStatsInBatch(batch, yearOf(date), { outDelta: totalDue });
+
+
+      // ✅ 회원별 갹출(미납) 생성
+      for(const memberId of participants){
+        const emRef = doc(db, colName("eventMembers"), eventMemberDocId(eventRef.id, memberId));
+        batch.set(emRef, {
+          eventId: eventRef.id,
+          memberId,
+          due: per,
+          paid: 0,
+          status: "UNPAID",
+          createdAt: Timestamp.now()
+        });
+      }
+
+      await batch.commit();
+      eventMembersCache.delete(eventRef.id);
+      return eventRef.id;
+    }
+
+    async function payEventContribution({ eventId, memberId, amount, memo, dateStr }){
+      if(!state.admin) throw new Error("총무만 가능합니다.");
+      if(!eventId) throw new Error("경조사 이벤트 선택 필요");
+      if(!memberId) throw new Error("입금자 선택 필요");
+      const amt = Number(amount || 0);
+      if(!amt || amt <= 0) throw new Error("금액을 확인하세요.");
+      if(!dateStr) throw new Error("날짜 선택 필요");
+
+      const [y,m,d] = dateStr.split("-").map(Number);
+      const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+
+      const eventRef = doc(db, colName("events"), eventId);
+      const emRef = doc(db, colName("eventMembers"), eventMemberDocId(eventId, memberId));
+      const creditRef = doc(db, colName("credits"), memberId);
+
+      const txRef = doc(collection(db, colName("transactions")));
+      const allocEventRef = doc(collection(db, colName("allocations")));
+      const allocCreditRef = doc(collection(db, colName("allocations")));
+
+      await runTransaction(db, async (t) => {
+        const evSnap = await t.get(eventRef);
+        if(!evSnap.exists()) throw new Error("이벤트가 존재하지 않습니다.");
+        const ev = evSnap.data();
+        if((ev.status || "OPEN") === "CLOSED") throw new Error("이미 종료된 이벤트입니다.");
+
+        const emSnap = await t.get(emRef);
+        if(!emSnap.exists()) throw new Error("이 이벤트 갹출 대상이 아닙니다. (당사자는 자동 제외)");
+
+        // ✅ Firestore 트랜잭션 규칙: 모든 읽기 → 모든 쓰기 (선수금 문서는 여기서 미리 읽어둡니다)
+        const creditSnap = await t.get(creditRef);
+        const em = emSnap.data();
+        const due = Number(em.due || 0);
+        const paid = Number(em.paid || 0);
+        const remain = Math.max(0, due - paid);
+        if(remain <= 0) throw new Error("이미 납부 완료된 회원입니다.");
+
+        const use = Math.min(amt, remain);
+        const extra = Math.max(0, amt - use);
+
+        const newPaid = paid + use;
+        const newStatus = (newPaid >= due) ? "PAID" : "PARTIAL";
+        t.update(emRef, { paid: newPaid, status: newStatus });
+
+        // 이벤트 집계 업데이트
+        let unpaidCount = Number(ev.unpaidCount || 0);
+        let paidSum = Number(ev.paidSum || 0);
+        paidSum += use;
+        if((em.status === "UNPAID" || em.status === "PARTIAL") && newStatus === "PAID") unpaidCount = Math.max(0, unpaidCount - 1);
+        const newEventStatus = (unpaidCount === 0) ? "CLOSED" : (ev.status || "OPEN");
+        t.update(eventRef, { paidSum, unpaidCount, status: newEventStatus, updatedAt: Timestamp.now() });
+
+        // 거래 기록(IN): 실제 입금액은 그대로 기록
+        t.set(txRef, {
+          type: "IN",
+          category: "CONDOLENCE_CONTRIB",
+          amount: amt,
+          memberId,
+          memberName: memberId,
+          memo: memo || "",
+          date,
+          eventId,
+          eventTitle: ev.title || "경조사",
+          targetMemberId: ev.targetMemberId || null,
+          targetMemberName: ev.targetMemberName || null,
+          eventAppliedAmount: use,
+          creditAddedAmount: extra,
+          createdByUid: state.user.uid,
+          createdAt: Timestamp.now()
+        });
+
+        bumpYearStatsInTxn(t, yearOf(date), { inDelta: amt });
+
+
+        // 배정(이벤트)
+        t.set(allocEventRef, {
+          txId: txRef.id,
+          memberId,
+          targetType: "EVENT",
+          targetId: eventId,
+          amount: use,
+          createdAt: Timestamp.now()
+        });
+
+        // 잔여는 선수금으로
+        if(extra > 0){
+          const cSnap = creditSnap;
+          const cur = cSnap.exists() ? Number(cSnap.data().balance || 0) : 0;
+          t.set(creditRef, { balance: cur + extra }, { merge:true });
+          t.set(allocCreditRef, {
+            txId: txRef.id,
+            memberId,
+            targetType: "CREDIT",
+            targetId: memberId,
+            amount: extra,
+            createdAt: Timestamp.now()
+          });
+        }
+      });
+
+      bumpYearStatsLocal(yearOf(date), { inDelta: amt });
+
+
+      eventMembersCache.delete(eventId);
+    }
+
+    /*********************
+     * 7) 잔고(기초 잔고 + 입금 - 지출)
+     *********************/
+    function calcSums(txList){
+      let inSum = 0;
+      let outSum = 0;
+      for(const tx of txList || []){
+        const amt = Number(tx.amount || 0);
+        if(tx.type === "IN") inSum += amt;
+        else if(tx.type === "OUT") outSum += amt;
+      }
+      return { inSum, outSum };
+    }
+
+    function renderBalance(){
+      const year = new Date().getFullYear();
+      const opening = Number(cachedConfig?.openingBalance || 0);
+      const ys = state.yearStatsCurrent || { inSum:0, outSum:0 };
+      const inSum = Number(ys.inSum || 0);
+      const outSum = Number(ys.outSum || 0);
+      const balance = opening + inSum - outSum;
+
+      if($("yearPill")) $("yearPill").textContent = `${year}년`;
+      if($("balanceHint")) $("balanceHint").textContent = `${year}년 현재 잔고(기초 잔고 + ${year}년 입금 - ${year}년 지출)`;
+      if($("openingTitle")) $("openingTitle").textContent = `${year}년 기초 잔고(1/1)`;
+      if($("inSumTitle")) $("inSumTitle").textContent = `${year}년 입금 합계`;
+      if($("outSumTitle")) $("outSumTitle").textContent = `${year}년 지출 합계`;
+
+      if($("balanceBig")) $("balanceBig").textContent = fmtWon(balance);
+      if($("openingLabel")) $("openingLabel").textContent = fmtWon(opening);
+      if($("inSumLabel")) $("inSumLabel").textContent = fmtWon(inSum);
+      if($("outSumLabel")) $("outSumLabel").textContent = fmtWon(outSum);
+      if($("openingBalance")) $("openingBalance").value = String(opening || 0);
+    }
+
+    // ✅ 해가 바뀌면 자동으로 '전년도 기말 잔고'를 새해 기초 잔고로 이월
+    async function ensureOpeningForCurrentYear(){
+      const nowYear = new Date().getFullYear();
+      let cfgYear = Number(cachedConfig?.openingYear || nowYear);
+      let opening = Number(cachedConfig?.openingBalance || 0);
+
+      // openingYear가 과거면, 그 해들의 '기말 잔고'를 순차 계산해 새해 기초로 넘깁니다.
+      while(cfgYear < nowYear){
+        const prevTx = await loadTransactionsForYear(cfgYear);
+        const { inSum, outSum } = calcSums(prevTx);
+        opening = opening + inSum - outSum; // cfgYear의 기말 잔고
+        cfgYear += 1;
+      }
+
+      if(String(cachedConfig.openingYear) !== String(nowYear) || Number(cachedConfig.openingBalance) !== Number(opening)){
+        const ref = doc(db, "config", configDocId());
+        await setDoc(ref, { openingYear: String(nowYear), openingBalance: opening }, { merge:true });
+        cachedConfig.openingYear = String(nowYear);
+        cachedConfig.openingBalance = opening;
+      }
+    }
+
+    async function wipeCollection(colName){
+      // 개발/테스트용 초기화: 문서를 배치로 삭제
+      let last = null;
+      while(true){
+        const base = [collection(db, colName), orderBy("__name__"), limit(450)];
+        const qy = last ? query(...base, startAfter(last)) : query(...base);
+        const snap = await getDocs(qy);
+        if(snap.empty) break;
+
+        const batch = writeBatch(db);
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        last = snap.docs[snap.docs.length - 1];
+      }
+    }
+
+    async function resetMoneyData(){
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const ok = confirm(`[개발/테스트용]
+회원 정보는 유지하고, 금액/거래 관련 데이터만 초기화합니다.
+
+삭제 대상:
+- 거래내역(transactions)
+- 배정내역(allocations)
+- 선수금(credits)
+- 월청구(memberPeriods)
+- 경조사 이벤트(events)
+- 경조사 이벤트 대상(eventMembers)
+- 회비 설정(config.main.feeHistory)
+
+기초 잔고(openingBalance)는 0으로 초기화됩니다.
+
+진행할까요?`);
+      if(!ok) return;
+
+      toast("초기화 중...");
+      await wipeCollection(colName("transactions"));
+      await wipeCollection(colName("allocations"));
+      await wipeCollection(colName("credits"));
+      await wipeCollection(colName("memberPeriods"));
+      // ✅ 경조사 이벤트도 금액 데이터에 포함(테스트용)
+      await wipeCollection(colName("eventMembers"));
+      await wipeCollection(colName("events"));
+      eventMembersCache.clear();
+
+      const ref = doc(db, "config", configDocId());
+      await setDoc(ref, { openingYear: String(new Date().getFullYear()), openingBalance: 0, feeHistory: [] }, { merge:true });
+
+      toast("초기화 완료 (회비 설정/월 생성은 다시 해주세요)");
+      await refreshAll();
+      setTab("dashboard");
+    }
+
+    let txDisplayLimit = 30;
+
+    /*********************
+     * 7.9) 거래내역 보기 모드(최근 120 / 연도별)
+     *********************/
+    let txViewMode = "RECENT";                 // RECENT | YEAR
+    let txViewYear = new Date().getFullYear();  // YEAR 모드일 때 선택 연도
+    let txTypeFilter = "ALL";                 // ALL | IN | OUT (연도별에서만 노출)
+    let txShowMonthSum = true;                 // 연도별 월별 합계 줄 표시
+    const txYearCache = new Map();              // year -> tx[]
+
+    function fillTxYearSelect(){
+      const el = $("txYearSelect");
+      if(!el) return;
+      const nowY = new Date().getFullYear();
+      const years = [];
+      for(let y=nowY; y>=nowY-6; y--) years.push(y);
+      el.innerHTML = years.map(y => `<option value="${y}">${y}년</option>`).join("");
+      // 값이 비어있으면 기본값 세팅
+      if(!el.value) el.value = String(txViewYear);
+      txViewYear = Number(el.value || nowY);
+    }
+
+    function updateTxViewBadge(){
+      const badge = $("txViewBadge");
+      if(!badge) return;
+      if(txViewMode === "RECENT"){
+        badge.classList.add("hidden");
+        badge.textContent = "";
+        return;
+      }
+      badge.classList.remove("hidden");
+      badge.textContent = `${txViewYear}년 전체`;
+    }
+
+    function syncTxViewControls(){
+      const modeEl = $("txViewMode");
+      const yearEl = $("txYearSelect");
+      const typeEl = $("txTypeFilter");
+      const msWrap = $("txMonthSumWrap");
+      const msEl = $("txMonthSum");
+
+      if(modeEl) modeEl.value = txViewMode;
+      if(yearEl) yearEl.classList.toggle("hidden", txViewMode !== "YEAR");
+
+      // 연도별에서만: 입금/지출 필터 + 월별 합계 토글
+      if(typeEl) typeEl.classList.toggle("hidden", txViewMode !== "YEAR");
+      if(msWrap) msWrap.classList.toggle("hidden", txViewMode !== "YEAR");
+
+      if(typeEl) typeEl.value = txTypeFilter;
+      if(msEl) msEl.checked = !!txShowMonthSum;
+
+      updateTxViewBadge();
+    }
+
+    function getTxViewList(){
+      if(txViewMode === "RECENT") return state.tx || [];
+      const y = Number(txViewYear);
+      return txYearCache.get(y) || [];
+    }
+
+    async function loadTxYearView(year, { force=false } = {}){
+      const y = Number(year);
+      if(!y) return;
+      if(!force && txYearCache.has(y)) return;
+      const list = await loadTransactionsForYear(y);
+      txYearCache.set(y, list);
+    }
+
+    async function applyTxView({ force=false } = {}){
+      if(txViewMode === "YEAR"){
+        const y = Number(txViewYear);
+        if(force || !txYearCache.has(y)) await loadTxYearView(y, { force:true });
+      }
+      renderTxList(getTxViewList());
+      updateTxViewBadge();
+    }
+
+    function renderTxList(list){
+      const keyword = ($("txFilter")?.value || "").trim().toLowerCase();
+
+      // 1) 타입 필터(연도별에서만 노출)
+      let rows = (list || []).slice();
+      if(txViewMode === "YEAR" && txTypeFilter !== "ALL"){
+        rows = rows.filter(x => x.type === txTypeFilter);
+      }
+
+      // 2) 키워드 검색
+      rows = rows.filter(x => {
+        if(!keyword) return true;
+        const hay = [x.memberName, x.memo, x.amount, x.category, x.targetMemberName, x.incomeTitle, x.eventTitle].join(" ").toLowerCase();
+        return hay.includes(keyword);
+      });
+
+      // 표시 개수 안내(※ 합계줄은 카운트에 포함하지 않음)
+      if($("txCount")){
+        const shown = Math.min(rows.length, txDisplayLimit);
+        $("txCount").textContent = rows.length ? `(총 ${rows.length}건 중 ${shown}건 표시)` : "";
+      }
+
+      if(rows.length === 0){
+        $("txList").innerHTML = `<div class="muted">내역이 없습니다.</div>`;
+        return;
+      }
+
+      // 3) 실제 거래 표시 개수는 txDisplayLimit 기준
+      const shownTx = rows.slice(0, txDisplayLimit);
+
+      // 4) 연도별 + 월별 합계 표시: 보여줄 거래(shownTx) 범위에서 월별 소계 줄을 삽입
+      let renderRows = shownTx;
+      if(txViewMode === "YEAR" && txShowMonthSum){
+        const groups = new Map();
+        const order = [];
+
+        const monthKey = (tx) => {
+          const d = tx?.date?.toDate ? tx.date.toDate() : new Date(tx.date);
+          const y = d.getFullYear();
+          const m = String(d.getMonth()+1).padStart(2,"0");
+          return `${y}-${m}`;
+        };
+
+        for(const tx of shownTx){
+          const mk = monthKey(tx);
+          if(!groups.has(mk)){
+            groups.set(mk, []);
+            order.push(mk);
+          }
+          groups.get(mk).push(tx);
+        }
+
+        const expanded = [];
+        for(const mk of order){
+          const g = groups.get(mk) || [];
+          let inSum = 0, outSum = 0;
+          for(const t of g){
+            const amt = Number(t.amount || 0);
+            if(t.type === "IN") inSum += amt;
+            else if(t.type === "OUT") outSum += amt;
+          }
+          const net = inSum - outSum;
+          expanded.push({ _kind:"MONTH_SUM", month: mk, inSum, outSum, net, count: g.length });
+          expanded.push(...g);
+        }
+        renderRows = expanded;
+      }
+
+      // 5) 렌더
+      $("txList").innerHTML = renderRows.map(x => {
+        if(x && x._kind === "MONTH_SUM"){
+          const netCls = x.net >= 0 ? "ok" : "bad";
+          const netSign = x.net >= 0 ? "+" : "-";
+          return `
+            <div class="txSum">
+              <div class="sumLine">
+                <div class="sumLeft">
+                  <span class="pill mono">${escapeHtml(x.month)}</span>
+                  <span class="muted tiny">${x.count}건</span>
+                </div>
+                <div class="sumRight">
+                  <span class="muted tiny">입금 <span class="mono ok sumNum">+${fmtWon(x.inSum)}</span></span>
+                  <span class="muted tiny">지출 <span class="mono bad sumNum">-${fmtWon(x.outSum)}</span></span>
+                  <span class="muted tiny">순증감 <span class="mono ${netCls} sumNum">${netSign}${fmtWon(Math.abs(x.net))}</span></span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        const isIn = x.type === "IN";
+        const type = isIn ? "입금" : "지출";
+        const typeCls = isIn ? "ok" : "bad";
+        const sign = isIn ? "+" : "-";
+        const amtHtml = `<span class="mono ${typeCls}">${sign}${fmtWon(x.amount)}</span>`;
+        const who = x.memberName ? `<span class="pill">${escapeHtml(x.memberName)}</span>` : "";
+        const cat = x.category ? `<span class="pill">${escapeHtml(categoryLabel(x.category))}</span>` : "";
+        const income = x.incomeTitle ? `<span class="pill">수입: ${escapeHtml(x.incomeTitle)}</span>` : "";
+        const target = x.targetMemberName ? `<span class="pill">당사자: ${escapeHtml(x.targetMemberName)}</span>` : "";
+        const ev = x.eventTitle ? `<span class="pill">이벤트: ${escapeHtml(x.eventTitle)}</span>` : "";
+        const applied = (x.eventAppliedAmount || x.creditAddedAmount)
+          ? `<span class="pill">적용: ${fmtWon(x.eventAppliedAmount||0)} / 잔여: ${fmtWon(x.creditAddedAmount||0)}</span>`
+          : "";
+        const receiptBtn = (x.type === "OUT")
+          ? `<span class="muted tiny">증빙: 네이버 밴드 참고</span>`
+          : ``;
+
+        const memoTxt = String(x.memo || "").trim();
+        const memoBtn = memoTxt
+          ? `<button class="linkBtn tiny" data-action="toggleMemo" data-id="${x.id}">자세히 보기</button>`
+          : ``;
+
+        return `
+          <div class="tx ${isIn ? "" : "outTint"}" data-txid="${x.id}">
+            <div class="txTop">
+              <div><b class="${typeCls}">${type}</b> ${amtHtml} ${who} ${cat} ${income} ${ev} ${target} ${applied}</div>
+              <div class="muted">${fmtDate(x.date)}</div>
+            </div>
+            <div id="memo-${x.id}" class="muted memo ${memoTxt ? "memoClamp" : ""}" style="margin-top:6px;">${escapeHtml(x.memo || "")}</div>
+            <div class="row" style="margin-top:8px; justify-content:flex-end; gap:8px;">${memoBtn}${receiptBtn || ""}</div>
+          </div>
+        `;
+      }).join("") + (rows.length > txDisplayLimit ? `
+        <div class="row" style="justify-content:center; padding:10px 0;">
+          <button class="secondary" data-action="moreTx">더 보기(+30)</button>
+        </div>
+      ` : "");
+    }
+
+    /*********************
+     * 8) 회원 현황(월별)
+     *********************/
+    async function loadMemberStatus({ memberId, startYm, endYm }){
+      // ✅ 인덱스 없이 동작하도록 orderBy 제거 후 JS에서 정렬
+      const qy = query(
+        collection(db, colName("memberPeriods")),
+        where("memberId","==",memberId)
+      );
+      const snap = await getDocs(qy);
+      const all = snap.docs.map(d => d.data()).sort((a,b)=> ymToNum(a.periodId) - ymToNum(b.periodId));
+
+      const s = ymToNum(startYm);
+      const e = ymToNum(endYm);
+      const rows = all.filter(x => s <= ymToNum(x.periodId) && ymToNum(x.periodId) <= e);
+
+      const creditSnap = await getDoc(doc(db, colName("credits"), memberId));
+      const credit = creditSnap.exists() ? Number(creditSnap.data().balance || 0) : 0;
+
+      return { rows, credit };
+    }
+
+    function renderStatus({ rows, credit, startYm, endYm }){
+      $("creditLabel").textContent = fmtWon(credit);
+
+      let arrears = 0;
+      $("statusGrid").innerHTML = rows.map(x => {
+        const due = Number(x.due||0);
+        const paid = Number(x.paid||0);
+
+        let tag = "";
+        if(x.status === "EXEMPT") tag = `<div class="v muted">면제</div>`;
+        else if(paid >= due) tag = `<div class="v ok">완납</div>`;
+        else if(paid > 0){
+          arrears += (due - paid);
+          tag = `<div class="v warn">부분납</div>`;
+        } else {
+          arrears += due;
+          tag = `<div class="v warn">미납</div>`;
+        }
+
+        const detail = x.status === "EXEMPT"
+          ? `<div class="muted tiny">${escapeHtml(x.exemptReason || "")}</div>`
+          : `<div class="muted tiny">${fmtWon(paid)} / ${fmtWon(due)}</div>`;
+
+        return `
+          <div class="monthBox">
+            <div class="k mono">${escapeHtml(x.periodId)}</div>
+            ${tag}
+            ${detail}
+          </div>
+        `;
+      }).join("") || `<div class="muted">선택 범위에 데이터가 없습니다. (총무: 설정 탭에서 월 생성)</div>`;
+
+      $("arrearsLabel").textContent = fmtWon(arrears);
+    }
+
+    /*********************
+     * 9) 탭/상태 관리
+     *********************/
+    let state = {
+      user: null,
+      admin: false,
+      members: [],
+      events: [],
+      tx: [],
+      txYear: [],
+      yearStatsCurrent: { inSum:0, outSum:0 }
+    };
+
+    let currentTab = "dashboard";
+    function setTab(name){
+      currentTab = name;
+      document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+      ["dashboard","members","settings","admin"].forEach(t => {
+        $("tab-"+t).classList.toggle("hidden", t !== name);
+      });
+
+      // ✅ 자동 새로고침은 끔: 필요한 경우 '새로고침' 버튼으로만 갱신
+      // (로그인 직후 refreshAll()로 1회 로딩은 수행)
+    }
+
+    document.querySelectorAll(".tab").forEach(b => {
+      b.addEventListener("click", () => {
+        const target = b.dataset.tab;
+        setTab(target);
+      });
+    });
+
+    /*********************
+     * 9.2) 대시보드 자동 새로고침(회원이 항상 최신 화면)
+     *********************/
+    let lastDashboardRefreshAt = 0;
+    let lastConfigRefreshAt = 0;
+    let dashboardRefreshing = false;
+
+    async function refreshConfigMaybe(force=false){
+      const now = Date.now();
+      if(force || !cachedConfig || (now - lastConfigRefreshAt) > 60000){
+        await refreshConfig();
+        lastConfigRefreshAt = Date.now();
+      }
+    }
+
+    async function refreshDashboardAuto({ force=false, toastMsg=null } = {}){
+      if(!state.user) return;
+      const now = Date.now();
+      if(!force && (now - lastDashboardRefreshAt) < 2500) return; // 탭 연타/중복 호출 방지
+      if(dashboardRefreshing) return;
+
+      dashboardRefreshing = true;
+      try{
+        // config는 매번 읽지 말고(비용/속도), 60초에 한 번 정도만 갱신
+        await refreshConfigMaybe(false);
+        await ensureOpeningForCurrentYear();
+
+        const year = new Date().getFullYear();
+        const [recent, ys] = await Promise.all([
+           loadTransactions(),
+           ensureYearStatsBuilt(year)
+        ]);
+        state.tx = recent;
+        state.yearStatsCurrent = ys;
+
+// ✅ txYear는 “연도별 보기(YEAR)”에서만 필요하니 여기서는 굳이 안 읽음
+
+      await applyTxView({ force:false });
+        renderBalance();
+
+        lastDashboardRefreshAt = Date.now();
+        if(toastMsg) toast(toastMsg);
+      } finally {
+        dashboardRefreshing = false;
+      }
+    }
+    // ✅ 자동 새로고침(setInterval) 비활성화: 읽기 쿼터 폭탄 방지
+
+    function lockUI(loggedIn){
+      $("lockedCard").classList.toggle("hidden", loggedIn);
+      $("appCard").classList.toggle("hidden", !loggedIn);
+      $("loginRow").classList.toggle("hidden", loggedIn);
+      $("logoutRow").classList.toggle("hidden", !loggedIn);
+    }
+
+    function applyRoleBadge(){
+      if(!state.user){
+        $("roleBadge").classList.add("hidden");
+        $("roleBadge").textContent = "";
+        return;
+      }
+      $("roleBadge").classList.remove("hidden");
+      $("roleBadge").textContent = state.admin
+        ? (PRACTICE_MODE ? "총무(연습 모드)" : "총무(쓰기 가능)")
+        : "회원(읽기 전용)";
+
+      // 총무 탭은 총무만 의미가 있으니, 비총무는 진입은 가능하지만 입력은 막는다.
+      // (탭 자체 숨기고 싶으면 아래 주석 해제)
+      // document.querySelector('[data-tab="admin"]').classList.toggle('hidden', !state.admin);
+    }
+
+    function syncAdminLocks(){
+      // 총무만 가능한 버튼/입력 비활성화
+      const adminOnlyIds = [
+        "btnAddDeposit","btnAddExpense","btnUpsertMember","btnAddExemption","btnAddFee","btnSaveConfig",
+        "btnGenForAll","btnGenForOne","btnRecalcRange",
+        "btnSaveOpeningBalance","btnResetMoney",
+        "btnCreateEvent",
+        "btnAddOtherIncome"
+      ];
+      adminOnlyIds.forEach(id => {
+        const el = $(id);
+        if(el) el.disabled = !state.admin;
+      });
+    }
+
+/*********************
+ * 9.5) 지출 UI(경조사 당사자 선택)
+ *********************/
+function syncOutTargetUI(){
+  const cat = $("outCategory")?.value;
+  const show = cat === "CONDOLENCE";
+  if(!$("outTargetMember")) return;
+
+  $("outTargetMember").classList.toggle("hidden", !show);
+  const hint = $("outTargetHint");
+  if(hint) hint.style.display = show ? "block" : "none";
+}
+
+if($("outCategory")) $("outCategory").addEventListener("change", syncOutTargetUI);
+
+/*********************
+ * 9.6) 입금 UI(경조사 이벤트 / 갹출)
+ *********************/
+function syncInEventUI(){
+  const mode = $("inMode")?.value;
+  const show = mode === "EVENT";
+  if($("inEvent")) $("inEvent").classList.toggle("hidden", !show);
+}
+if($("inMode")) $("inMode").addEventListener("change", syncInEventUI);
+
+    /*********************
+     * 9.3) 도움말(월 생성)
+     *********************/
+    const monthGenHelpHtml = `
+  <div class="muted tiny">컴퓨터를 잘 몰라도 이 설명만 보면 됩니다. (다음 총무에게 그대로 보여줘도 OK)</div>
+
+  <div class="helpWarn" style="margin-top:12px;">
+    <b>3줄 요약</b>
+    <ul class="helpList" style="margin-top:8px;">
+      <li><b>월 생성</b> = 회원별로 ‘월별 청구서(YYYY-MM)’를 미리 만들어 두는 작업</li>
+      <li><b>(주의) 범위 재계산</b> = 그 청구서의 <b>청구금액(due)·면제</b>만 최신 규칙으로 다시 계산 (이미 낸 돈(paid)은 그대로)</li>
+      <li>권장 순서: <b>회비 설정 저장 → 월 생성(필요하면) → 재계산</b></li>
+    </ul>
+  </div>
+
+  <div class="helpH"><b>1) ‘월별 청구서’가 뭐예요?</b></div>
+  <ul class="helpList">
+    <li>회원마다 매달 “이번 달 회비는 얼마”라고 적혀 있는 <b>청구서 한 장</b>이 있다고 생각하면 됩니다.</li>
+    <li>이 앱에서는 그 청구서가 <span class="mono">memberPeriods</span>에 저장됩니다. (예: 2025-09)</li>
+    <li>청구서에는 3가지만 중요합니다: <b>청구액(due)</b>, <b>납부액(paid)</b>, <b>상태(미납/부분/완납/면제)</b></li>
+  </ul>
+
+  <div class="helpH"><b>2) 월 생성은 언제 눌러요?</b></div>
+  <ul class="helpList">
+    <li><b>처음 세팅</b>: 기간을 넉넉히 잡아 <b>전체 회원 생성</b> 한 번 (예: 2024-01 ~ 2026-12)</li>
+    <li><b>새 회원 추가</b>: 그 회원만 <b>선택 회원 생성</b></li>
+    <li>월 생성은 <b>거래내역(입금/지출)을 만들지 않습니다.</b> 그냥 “청구서 종이”만 만들어 둡니다.</li>
+  </ul>
+
+  <div class="helpH"><b>3) (주의) 범위 재계산은 언제 눌러요?</b></div>
+  <ul class="helpList">
+    <li><b>회원이 새로 들어왔거나</b> (영입)</li>
+    <li><b>회비 금액이 바뀌었거나</b> (예: 2026-02부터 인상)</li>
+    <li><b>면제 기간을 추가/수정했거나</b></li>
+  </ul>
+
+  <div class="helpH"><b>4) 재계산을 누르면 뭐가 바뀌고, 뭐가 안 바뀌나요?</b></div>
+  <ul class="helpList">
+    <li>✅ 바뀌는 것: <b>청구액(due)</b>, <b>면제 여부</b>, <b>상태(미납/부분/완납/면제)</b></li>
+    <li>❌ 안 바뀌는 것(핵심): <b>납부액(paid)</b> = 이미 낸 돈은 그대로 유지됩니다.</li>
+    <li>즉, <b>장부를 지우는 기능이 아니라</b> “청구서 내용을 최신 규칙으로 업데이트”하는 기능입니다.</li>
+  </ul>
+
+  <div class="helpWarn" style="margin-top:12px;">
+    <b>실수 방지 체크</b>
+    <ul class="helpList" style="margin-top:8px;">
+      <li>회비 금액을 바꿨다면: <b>회비 설정에서 저장 버튼을 먼저 누르기</b></li>
+      <li>범위는 “바뀐 달”이 포함되게 잡기 (예: 2026-02부터 변경이면 2026-02 ~ 2026-12)</li>
+      <li>이 화면의 재계산은 <b>선택한 회원 1명</b> 기준입니다. (회원 선택 필수)</li>
+    </ul>
+  </div>
+
+  <div class="helpH"><b>5) 가장 흔한 예시</b></div>
+  <ul class="helpList">
+    <li><b>회비 인상</b>: 2026-02부터 20,000 → 25,000
+      <div class="muted tiny" style="margin-top:6px;">① 회비 설정에서 2026-02 / 25000 추가 → ② <b>저장</b> → ③ (필요한 회원) 범위 재계산</div>
+    </li>
+    <li><b>면제 추가</b>: 어떤 회원 2025년 1~12월 면제
+      <div class="muted tiny" style="margin-top:6px;">① 면제 추가 → ② 그 회원 선택 → ③ 2025-01 ~ 2025-12 범위 재계산</div>
+    </li>
+  </ul>
+
+  <div class="helpWarn" style="margin-top:12px;">
+    <b>주의!</b> 월 생성 전에 입금(월회비 자동배정)을 먼저 등록하면,
+    배정할 “미납 월 청구서”가 없어서 <b>선수금(크레딧)</b>으로만 남을 수 있습니다.
+    <div class="muted tiny" style="margin-top:6px;">권장 순서: <b>월 생성 → 입금 등록</b></div>
+  </div>
+`;
+
+    function openHelp(html){
+      $("helpBody").innerHTML = html;
+      $("helpOverlay").classList.remove("hidden");
+      $("btnHelpClose").focus();
+    }
+
+    function closeHelp(){
+      $("helpOverlay").classList.add("hidden");
+    }
+
+    $("btnMonthGenHelp")?.addEventListener("click", () => openHelp(monthGenHelpHtml));
+    $("btnHelpClose")?.addEventListener("click", closeHelp);
+    $("helpOverlay")?.addEventListener("click", (e) => { if(e.target === $("helpOverlay")) closeHelp(); });
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && !$("helpOverlay").classList.contains("hidden")) closeHelp();
+    });
+
+
+    
+    /*********************
+     * 10) 이벤트 핸들러
+     *********************/
+    $("btnLogin").addEventListener("click", async () => {
+      const email = $("email").value.trim();
+      const pw = $("password").value;
+      if(!email || !pw) return alert("이메일/비밀번호를 입력해주세요.");
+      try{
+        await signInWithEmailAndPassword(auth, email, pw);
+      } catch(e){
+        // ✅ 줄바꿈은 실제 줄바꿈이 아니라 "\n"(백슬래시+n)로 써야 문법 오류가 안 납니다.
+        alert("로그인 실패: " + (e?.code || "") + "\n" + (e?.message || "이메일/비밀번호를 확인하세요."));
+        console.error(e);
+      }
+    });
+
+    $("btnLogout").addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    // 🔰 연습 모드 토글(총무 전용)
+    $("practiceToggle")?.addEventListener("change", async () => {
+      const tgl = $("practiceToggle");
+      if(!tgl) return;
+      if(!state.admin){
+        tgl.checked = false;
+        return alert("총무만 연습 모드를 사용할 수 있습니다.");
+      }
+
+      const wantOn = !!tgl.checked;
+      if(wantOn){
+        const ok = confirm(`연습 모드를 켜면 \"demo_\" 데이터 공간으로 전환됩니다.
+실제 장부 데이터는 건드리지 않습니다.
+
+연습 모드를 켤까요?`);
+        if(!ok){
+          tgl.checked = false;
+          return;
+        }
+      }
+
+      PRACTICE_MODE = wantOn;
+
+      // ✅ 캐시 초기화: 실제/연습 데이터 섞임 방지
+      try{
+        txYearCache.clear();
+        eventMembersCache.clear();
+        yearStatsCache.clear();
+      } catch(_){}
+
+      if(PRACTICE_MODE) localStorage.setItem("practice_mode", "1");
+      else localStorage.removeItem("practice_mode");
+
+      applyRoleBadge();
+      syncPracticeUI();
+      toast(PRACTICE_MODE ? "연습 모드 ON (Demo)" : "연습 모드 OFF (실제)");
+
+      // 데이터 소스가 바뀌므로 전체 리로드
+      try{
+        await refreshAll();
+        setTab("dashboard");
+      } catch(e){
+        alert(e?.message || String(e));
+        console.error(e);
+      }
+    });
+
+    $("btnRefresh").addEventListener("click", async () => {
+      txDisplayLimit = 30;
+      await refreshDashboardAuto({ force:true, toastMsg:"새로고침 완료" });
+
+      // YEAR 모드라면 선택 연도도 강제로 다시 불러옵니다.
+      if(txViewMode === "YEAR"){
+        await loadTxYearView(txViewYear, { force:true });
+      }
+      await applyTxView({ force:false });
+    });
+
+    // 거래내역 보기 모드 전환
+    $("txViewMode")?.addEventListener("change", async () => {
+      txDisplayLimit = 30;
+      txViewMode = $("txViewMode")?.value || "RECENT";
+      fillTxYearSelect();
+      syncTxViewControls();
+
+      if(txViewMode === "YEAR"){
+        txViewYear = Number($("txYearSelect")?.value || new Date().getFullYear());
+        toast(`${txViewYear}년 거래 불러오는 중...`);
+        await loadTxYearView(txViewYear, { force:false });
+      }
+      await applyTxView({ force:false });
+    });
+
+    $("txYearSelect")?.addEventListener("change", async () => {
+      if(txViewMode !== "YEAR") return;
+      txDisplayLimit = 30;
+      txViewYear = Number($("txYearSelect")?.value || new Date().getFullYear());
+      syncTxViewControls();
+      toast(`${txViewYear}년 거래 불러오는 중...`);
+      await loadTxYearView(txViewYear, { force:false });
+      await applyTxView({ force:false });
+    });
+
+    // 연도별: 입금/지출만 보기
+    $("txTypeFilter")?.addEventListener("change", async () => {
+      if(txViewMode !== "YEAR") return;
+      txDisplayLimit = 30;
+      txTypeFilter = $("txTypeFilter")?.value || "ALL";
+      await applyTxView({ force:false });
+    });
+
+    // 연도별: 월별 합계 줄 표시
+    $("txMonthSum")?.addEventListener("change", () => {
+      if(txViewMode !== "YEAR") return;
+      txDisplayLimit = 30;
+      txShowMonthSum = !!$("txMonthSum")?.checked;
+      renderTxList(getTxViewList());
+    });
+
+    $("txFilter").addEventListener("input", () => {
+      txDisplayLimit = 30;
+      renderTxList(getTxViewList());
+    });
+
+    // 거래내역 메모: 2줄 미리보기 + (자세히 보기/접기)
+    // 거래내역 메모: 2줄 미리보기 + (자세히 보기/접기)
+    $("txList").addEventListener("click", (e) => {
+      // 더 보기
+      const more = e.target.closest('button[data-action="moreTx"]');
+      if(more){
+        txDisplayLimit += 30;
+        renderTxList(getTxViewList());
+        return;
+      }
+
+      const btn = e.target.closest('button[data-action="toggleMemo"]');
+      if(!btn) return;
+      const id = btn.dataset.id;
+      const memoEl = document.getElementById(`memo-${id}`);
+      if(!memoEl) return;
+
+      memoEl.classList.toggle("memoClamp");
+      const clamped = memoEl.classList.contains("memoClamp");
+      btn.textContent = clamped ? "자세히 보기" : "접기";
+    });
+
+    /*********************
+     * 거래내역: 롱프레스(길게 누르기)로 삭제 팝업
+     *********************/
+    let txLongPressTimer = null;
+    let txLongPressTargetId = null;
+    let txLongPressStart = null;
+
+    function openTxActionOverlay(txId){
+      const tx = getTxViewList().find(t => t.id === txId)
+        || (state.tx || []).find(t => t.id === txId)
+        || (state.txYear || []).find(t => t.id === txId)
+        || (() => {
+          for(const list of txYearCache.values()){
+            const f = (list || []).find(t => t.id === txId);
+            if(f) return f;
+          }
+          return null;
+        })();
+      if(!tx) return alert("거래를 찾지 못했습니다.");
+      txLongPressTargetId = txId;
+
+      const isIn = tx.type === "IN";
+      const type = isIn ? "입금" : "지출";
+      const sign = isIn ? "+" : "-";
+
+      $("txActionBody").innerHTML = `
+        <div class="row" style="justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div><b>${escapeHtml(type)}</b> <span class="mono">${sign}${fmtWon(tx.amount)}</span></div>
+            <div class="muted tiny" style="margin-top:6px;">
+              ${tx.memberName ? `입금자: <b>${escapeHtml(tx.memberName)}</b> · ` : ""}
+              ${tx.category ? `구분: <b>${escapeHtml(categoryLabel(tx.category))}</b> · ` : ""}
+              ${tx.incomeTitle ? `수입내용: <b>${escapeHtml(tx.incomeTitle)}</b> · ` : ""}
+              ${tx.eventTitle ? `이벤트: <b>${escapeHtml(tx.eventTitle)}</b> · ` : ""}
+              ${tx.targetMemberName ? `당사자: <b>${escapeHtml(tx.targetMemberName)}</b>` : ""}
+            </div>
+          </div>
+          <div class="muted">${fmtDate(tx.date)}</div>
+        </div>
+        <div class="hr"></div>
+        <div class="muted tiny">메모</div>
+        <div class="memo" style="margin-top:6px;">${escapeHtml(tx.memo || "(없음)")}</div>
+      `;
+
+      $("txActionOverlay").classList.remove("hidden");
+      $("btnTxClose").focus();
+    }
+
+    function closeTxActionOverlay(){
+      txLongPressTargetId = null;
+      $("txActionOverlay").classList.add("hidden");
+    }
+
+    $("btnTxClose")?.addEventListener("click", closeTxActionOverlay);
+    $("txActionOverlay")?.addEventListener("click", (e) => { if(e.target === $("txActionOverlay")) closeTxActionOverlay(); });
+    document.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && !$("txActionOverlay").classList.contains("hidden")) closeTxActionOverlay();
+    });
+
+    function getPointerXY(e){
+      if(e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      if(e.changedTouches && e.changedTouches[0]) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function clearTxLongPress(){
+      if(txLongPressTimer){ clearTimeout(txLongPressTimer); txLongPressTimer = null; }
+      txLongPressStart = null;
+    }
+
+    // 모바일/데스크톱 공통: pointer 이벤트로 롱프레스 감지
+    $("txList").addEventListener("pointerdown", (e) => {
+      if(!state.admin) return;
+      if(e.button !== undefined && e.button !== 0) return; // 좌클릭만
+      if(e.target.closest("button") || e.target.closest("input") || e.target.closest("select") || e.target.closest("textarea")) return;
+
+      const row = e.target.closest(".tx[data-txid]");
+      if(!row) return;
+      const txId = row.dataset.txid;
+      if(!txId) return;
+
+      const p = getPointerXY(e);
+      txLongPressStart = { x:p.x, y:p.y };
+
+      clearTxLongPress();
+      txLongPressTimer = setTimeout(() => {
+        openTxActionOverlay(txId);
+      }, 550);
+    }, { passive:true });
+
+    $("txList").addEventListener("pointermove", (e) => {
+      if(!txLongPressTimer || !txLongPressStart) return;
+      const p = getPointerXY(e);
+      const dx = Math.abs(p.x - txLongPressStart.x);
+      const dy = Math.abs(p.y - txLongPressStart.y);
+      if(dx > 12 || dy > 12) clearTxLongPress();
+    }, { passive:true });
+
+    $("txList").addEventListener("pointerup", clearTxLongPress, { passive:true });
+    $("txList").addEventListener("pointercancel", clearTxLongPress, { passive:true });
+
+    $("btnQuickRange").addEventListener("click", () => {
+      const now = new Date();
+      const end = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      let d = new Date(now.getFullYear(), now.getMonth(), 1);
+      d.setMonth(d.getMonth()-11);
+      const start = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      $("rangeStart").value = start;
+      $("rangeEnd").value = end;
+    });
+
+    $("btnLoadStatus").addEventListener("click", async () => {
+      const memberId = $("memberSelect").value;
+      const startYm = $("rangeStart").value.trim();
+      const endYm = $("rangeEnd").value.trim();
+      if(!memberId) return alert("회원을 선택하세요.");
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM 형식입니다.");
+
+      const res = await loadMemberStatus({ memberId, startYm, endYm });
+      renderStatus({ ...res, startYm, endYm });
+    });
+
+    $("btnReloadMembers").addEventListener("click", async () => {
+      await refreshMembers();
+      toast("회원 목록 새로고침");
+    });
+
+    // 회원 목록에서: 회원 수정/제명, 면제 수정/삭제
+    $("memberList").addEventListener("click", async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      if(!state.admin) return alert("총무만 가능합니다.");
+
+      const action = btn.dataset.action;
+      const memberId = btn.dataset.member;
+      const idx = btn.dataset.idx !== undefined ? Number(btn.dataset.idx) : null;
+      const member = (state.members || []).find(m => m.name === memberId);
+      if(!member) return alert("회원을 찾지 못했습니다.");
+
+      // 1) 회원 수정: 폼에 채워 넣기
+      if(action === "editMember"){
+        $("mName").value = member.name || "";
+        $("mActiveFrom").value = member.activeFrom || "";
+        $("mActiveTo").value = member.activeTo || "";
+        toast("회원 관리 폼에 값을 채웠습니다. 저장을 누르면 반영됩니다.");
+        return;
+      }
+
+      // 2) 제명(활동 종료월 설정)
+      if(action === "kickMember"){
+        const now = new Date();
+        const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+        const input = prompt(`활동 종료월을 입력하세요 (YYYY-MM).
+예: 2025-12
+
+비워두면 '활동중'으로 되돌립니다.`, member.activeTo || ym);
+        if(input === null) return; // 취소
+        const v = input.trim();
+        if(v && !isYm(v)) return alert("형식 오류: YYYY-MM");
+        try{
+          await setMemberActiveTo({ memberId, activeTo: v || null });
+          toast(v ? `제명 처리 완료(종료월 ${v})` : "활동중으로 복귀");
+          await refreshMembers();
+        } catch(err){
+          alert(err.message || String(err));
+        }
+        return;
+      }
+
+      // 3) 면제 수정(폼에 채우고 수정모드)
+      if(action === "editEx"){
+        const ex = Array.isArray(member.exemptions) ? member.exemptions : [];
+        if(idx === null || idx < 0 || idx >= ex.length) return alert("면제 인덱스 오류");
+        const it = ex[idx];
+        $("exMember").value = memberId;
+        $("exFrom").value = it.from || "";
+        $("exTo").value = it.to || "";
+        $("exReason").value = it.reason || "";
+        exemptionEdit = { memberId, idx };
+        $("btnAddExemption").textContent = "면제 수정 저장";
+        toast("면제 수정 모드: 수정 후 '면제 수정 저장'을 누르세요.");
+        return;
+      }
+
+      // 4) 면제 삭제
+      if(action === "delEx"){
+        const ok = confirm(`면제를 삭제할까요?
+
+회원: ${memberId}`);
+        if(!ok) return;
+        try{
+          await removeExemptionAt({ memberId, idx });
+          toast("면제 삭제 완료");
+          await refreshMembers();
+        } catch(err){
+          alert(err.message || String(err));
+        }
+        return;
+      }
+    });
+
+    $("btnUpsertMember").addEventListener("click", async () => {
+  if(!state.admin) return alert("총무만 가능합니다.");
+  const btn = $("btnUpsertMember");
+  try{
+    if(btn) btn.disabled = true;
+
+    const id = await upsertMember({
+      name: $("mName").value,
+      activeFrom: $("mActiveFrom").value.trim(),
+      activeTo: $("mActiveTo").value.trim()
+    });
+        toast(`회원 저장: ${id}`);
+        $("mName").value = "";
+        $("mActiveFrom").value = "";
+        $("mActiveTo").value = "";
+        await refreshMembers();
+      } catch(e){
+    alert(e.message || String(e));
+  } finally {
+    // 성공/실패와 무관하게 버튼 잠금 해제
+    if(btn) btn.disabled = !state.admin;
+  }
+});
+
+    // 면제 추가/수정
+    let exemptionEdit = null; // { memberId, idx }
+
+    function resetExemptionForm(){
+      exemptionEdit = null;
+      $("exFrom").value = "";
+      $("exTo").value = "";
+      $("exReason").value = "";
+      if($("btnAddExemption")) $("btnAddExemption").textContent = "면제 추가";
+    }
+
+    $("btnAddExemption").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      try{
+        const memberId = $("exMember").value;
+        const from = $("exFrom").value.trim();
+        const to = $("exTo").value.trim();
+        const reason = $("exReason").value.trim();
+
+        if(exemptionEdit && exemptionEdit.memberId === memberId){
+          await updateExemptionAt({ memberId, idx: exemptionEdit.idx, from, to, reason });
+          toast("면제 수정 완료");
+        } else {
+          await addExemption({ memberId, from, to, reason });
+          toast("면제 추가 완료");
+        }
+
+        resetExemptionForm();
+        await refreshMembers();
+      } catch(e){
+        alert(e.message || String(e));
+      }
+    });
+
+    // 지출 등록
+$("btnAddExpense").addEventListener("click", async () => {
+  if(!state.admin) return alert("총무만 가능합니다.");
+
+  const category = $("outCategory").value;
+  const amount = Number($("outAmount").value || 0);
+  const dateStr = $("outDate").value;
+  const memo = $("outMemo").value.trim();
+  const targetMemberId = category === "CONDOLENCE" ? $("outTargetMember").value : "";
+
+  if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+  if(!dateStr) return alert("날짜 선택 필요");
+  if(category === "CONDOLENCE" && !targetMemberId) return alert("경조사 당사자(본인)를 선택하세요.");
+
+  try{
+    const [y,m,d] = dateStr.split("-").map(Number);
+    const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+
+    const txRef = doc(collection(db, colName("transactions")));
+    const txYear = yearOf(date);
+
+    await runTransaction(db, async (t) => {
+      t.set(txRef, {
+        type: "OUT",
+        category,
+        amount,
+        memo,
+        date,
+        targetMemberId: targetMemberId || null,
+        targetMemberName: targetMemberId || null,
+        createdByUid: state.user.uid,
+        createdAt: Timestamp.now()
+      });
+
+      bumpYearStatsInTxn(t, txYear, { outDelta: amount });
+    });
+
+    bumpYearStatsLocal(txYear, { outDelta: amount });
+
+    $("outAmount").value = "";
+    $("outMemo").value = "";
+    toast("지출 등록 완료");
+    await refreshAll();
+    setTab("dashboard");
+  } catch(e){
+    alert(e?.message || String(e));
+    console.error(e);
+  }
+});
+
+// ✅ 경조사 이벤트 / 갹출 생성
+$("btnCreateEvent")?.addEventListener("click", async () => {
+  if(!state.admin) return alert("총무만 가능합니다.");
+  const btn = $("btnCreateEvent");
+  try{
+    const title = $("evTitle").value.trim();
+    const targetMemberId = $("evTargetMember").value;
+    const excludedMemberIds = getSelectedEventExcludes().filter(x => x && x !== targetMemberId);
+    const perPersonAmount = Number($("evPerAmount").value || 0);
+    const dateStr = $("evDate").value;
+    const memo = $("evMemo").value.trim();
+
+    if(!targetMemberId) return alert("경조사 당사자(본인)를 선택하세요.");
+    if(!perPersonAmount || perPersonAmount <= 0) return alert("1인당 갹출 금액을 확인하세요.");
+    if(!dateStr) return alert("날짜 선택 필요");
+
+    // ✅ 생성 전 확인(경조사 이벤트는 수정/삭제 불가)
+    const ym = String(dateStr).slice(0,7);
+    const excludeSet = new Set((excludedMemberIds || []).filter(x => x && x !== targetMemberId));
+    const participants = (state.members || [])
+      .filter(m => inActive(m, ym))
+      .map(m => m.name)
+      .filter(n => n && n !== targetMemberId && !excludeSet.has(n));
+    const totalDuePreview = perPersonAmount * participants.length;
+
+    const excludeText = excludeSet.size ? [...excludeSet].join(", ") : "없음";
+    const confirmMsg =
+      `⚠️ 경조사 이벤트 생성 확인
+
+`+
+      `경조사 이벤트는 생성 후 수정/삭제가 불가능합니다.
+`+
+      `본인/제외회원/갹출금을 정확히 확인하셨습니까?
+
+`+
+      `- 이벤트명: ${title || "경조사"}
+`+
+      `- 경조사 회원 본인: ${targetMemberId}
+`+
+      `- 제외 회원: ${excludeText}
+`+
+      `- 갹출 대상: ${participants.length}명
+`+
+      `- 1인당 갹출 금액: ${fmtWon(perPersonAmount)}
+`+
+      `- 선지출 총액: ${fmtWon(totalDuePreview)}
+
+`+
+      `생성할까요?`;
+
+    if(!confirm(confirmMsg)) return;
+
+    // 실수로 2번 눌러 중복 생성되는 것 방지
+    if(btn) btn.disabled = true;
+
+    const eventId = await createCondolenceEvent({ title, targetMemberId, excludedMemberIds, perPersonAmount, dateStr, memo });
+    toast("이벤트 생성 완료");
+
+    // 입력 초기화
+    $("evTitle").value = "";
+    $("evMemo").value = "";
+    clearEventExcludeChecks();
+
+    await refreshAll();
+    // 입금 탭에서 바로 선택할 수 있도록
+    if($("inMode")) $("inMode").value = "EVENT";
+    syncInEventUI();
+    if($("inEvent")) $("inEvent").value = eventId;
+    setTab("dashboard");
+  } catch(e){
+    alert(e.message || String(e));
+  } finally {
+    if(btn) btn.disabled = !state.admin;
+  }
+});
+
+// ✅ 경조사 이벤트 목록 새로고침
+$("btnReloadEvents")?.addEventListener("click", async () => {
+  await refreshEvents();
+  toast("경조사 이벤트 새로고침");
+});
+
+// ✅ 경조사 이벤트 상세 토글
+$("eventList")?.addEventListener("click", async (e) => {
+  const btn = e.target.closest('button[data-action="toggleEvent"]');
+  if(!btn) return;
+  const eventId = btn.dataset.id;
+  const host = document.getElementById(`evDetail-${eventId}`);
+  if(!host) return;
+
+  const isOpen = !host.classList.contains("hidden");
+  if(isOpen){
+    host.classList.add("hidden");
+    btn.textContent = "자세히 보기";
+    return;
+  }
+
+  btn.textContent = "불러오는 중...";
+  try{
+    let rows = eventMembersCache.get(eventId);
+    if(!rows){
+      rows = await loadEventMembers(eventId);
+      eventMembersCache.set(eventId, rows);
+    }
+
+    const paidCnt = rows.filter(r => r.status === "PAID").length;
+    const partialCnt = rows.filter(r => r.status === "PARTIAL").length;
+    const unpaidCnt = rows.filter(r => r.status === "UNPAID").length;
+
+    host.innerHTML = `
+      <div class="muted tiny">납부 ${paidCnt}명 · 부분 ${partialCnt}명 · 미납 ${unpaidCnt}명</div>
+      <div class="hr"></div>
+      ${rows.map(r => {
+        const due = Number(r.due||0);
+        const paid = Number(r.paid||0);
+        const st = r.status === "PAID" ? `<span class="ok">완납</span>` : (r.status === "PARTIAL" ? `<span class="warn">부분</span>` : `<span class="warn">미납</span>`);
+        return `
+          <div class="tx">
+            <div class="txTop">
+              <div><b>${escapeHtml(r.memberId||"")}</b> ${st}</div>
+              <div class="muted tiny">${fmtWon(paid)} / ${fmtWon(due)}</div>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    `;
+
+    host.classList.remove("hidden");
+    btn.textContent = "접기";
+  } catch(err){
+    alert(err.message || String(err));
+    btn.textContent = "자세히 보기";
+  }
+});
+
+// 회비 설정
+    let cachedConfig = null;
+
+    function renderFeeHistory(){
+      const list = cachedConfig?.feeHistory || [];
+      if(list.length === 0){
+        $("feeHistory").innerHTML = `<div class="muted">설정이 없습니다.</div>`;
+        return;
+      }
+      const sorted = [...list].sort((a,b)=> ymToNum(a.from)-ymToNum(b.from));
+      $("feeHistory").innerHTML = sorted.map((x,idx)=>`
+        <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--line); padding:8px 0;">
+          <div class="mono">${escapeHtml(x.from)}부터</div>
+          <div>${fmtWon(x.amount)}</div>
+        </div>
+      `).join("");
+    }
+
+    $("btnAddFee").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const from = $("feeFrom").value.trim();
+      const amount = Number($("feeAmount").value || 0);
+      if(!isYm(from)) return alert("적용 시작월은 YYYY-MM");
+      if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+
+      cachedConfig.feeHistory = Array.isArray(cachedConfig.feeHistory) ? cachedConfig.feeHistory : [];
+      cachedConfig.feeHistory.push({ from, amount });
+      // 중복 from이 있을 수 있으니, 같은 from이면 마지막 값을 사용하도록 정리
+      const map = new Map();
+      for(const it of cachedConfig.feeHistory){
+        if(isYm(it.from)) map.set(it.from, Number(it.amount||0));
+      }
+      cachedConfig.feeHistory = [...map.entries()].map(([f,a])=>({from:f, amount:a}));
+
+      renderFeeHistory();
+      $("feeFrom").value = "";
+      $("feeAmount").value = "";
+      toast("추가됨(저장 버튼을 눌러 확정)");
+    });
+
+    $("btnSaveConfig").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const ref = doc(db, "config", configDocId());
+      await setDoc(ref, cachedConfig, { merge:true });
+      toast("설정 저장 완료");
+      renderBalance();
+    });
+
+    // 기초 잔고 저장(중요): 저장 전 확인 팝업
+    $("btnSaveOpeningBalance").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+
+      const btn = $("btnSaveOpeningBalance");
+      const v = Number($("openingBalance").value || 0);
+      if(v < 0) return alert("기초 잔고는 0 이상으로 입력해 주세요.");
+
+      // 현재/변경 후 잔고를 미리 보여주면 실수 방지가 됩니다.
+      const year = new Date().getFullYear();
+      const curOpening = Number(cachedConfig?.openingBalance || 0);
+      const ys = await ensureYearStatsBuilt(year);
+      const inSum = Number(ys?.inSum || 0);
+      const outSum = Number(ys?.outSum || 0);
+      const curBalance = curOpening + inSum - outSum;
+      const newBalance = v + inSum - outSum;
+
+      const ok = confirm(`⚠️ 기초 잔고 변경 확인
+
+`+
+        `이 작업은 거래내역을 지우지 않습니다.
+`+
+        `대시보드 잔고가 (기초 잔고 + 올해 입금 - 올해 지출)로 다시 계산됩니다.
+
+`+
+        `- 현재 기초 잔고: ${fmtWon(curOpening)}
+`+
+        `- 변경 후 기초 잔고: ${fmtWon(v)}
+
+`+
+        `- 현재 잔고: ${fmtWon(curBalance)}
+`+
+        `- 변경 후 잔고: ${fmtWon(newBalance)}
+
+`+
+        `그래도 진행하시겠습니까?`);
+      if(!ok) return;
+
+      try{
+        if(btn) btn.disabled = true;
+
+        const yearStr = String(year);
+        const ref = doc(db, "config", configDocId());
+        await setDoc(ref, { openingYear: yearStr, openingBalance: v }, { merge:true });
+        cachedConfig.openingYear = yearStr;
+        cachedConfig.openingBalance = v;
+
+        toast("기초 잔고 저장 완료");
+        state.yearStatsCurrent = await ensureYearStatsBuilt(year);
+        renderBalance();
+      } catch(e){
+        alert(e?.message || String(e));
+        console.error(e);
+      } finally {
+        if(btn) btn.disabled = !state.admin;
+      }
+    });
+
+    // 금액 데이터 초기화(개발용)
+    $("btnResetMoney").addEventListener("click", resetMoneyData);
+
+    $("btnRebuildYearStats")?.addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+
+      const nowY = new Date().getFullYear();
+      const startY = Number(prompt("재계산 시작 연도(예: 2024)", String(nowY - 1)) || 0);
+      if(!startY) return;
+
+      const endY = Number(prompt("재계산 종료 연도", String(nowY)) || 0);
+      if(!endY || endY < startY) return;
+
+      toast("연도 합계 재계산 중...");
+      for(let y = startY; y <= endY; y++){
+        const txs = await loadTransactionsForYear(y);
+        const { inSum, outSum } = calcSums(txs);
+        await setDoc(yearStatsRef(y), { inSum, outSum, rebuiltAt: Timestamp.now() }, { merge:true });
+        yearStatsCache.set(String(y), { inSum, outSum });
+        if(y === nowY) state.yearStatsCurrent = { inSum, outSum };
+      }
+
+      renderBalance();
+      toast("연도 합계 재계산 완료");
+    });
+
+    // 월 생성
+    $("btnGenForAll").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const startYm = $("genStart").value.trim();
+      const endYm = $("genEnd").value.trim();
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM");
+
+      toast("전체 회원 월 생성 시작...");
+      for(const m of state.members){
+        await ensureMemberPeriodsForRange({ member: m, startYm, endYm, recalc:false });
+      }
+      toast("전체 회원 월 생성 완료");
+    });
+
+    $("btnGenForOne").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const startYm = $("genStart").value.trim();
+      const endYm = $("genEnd").value.trim();
+      const memberId = $("genMember").value;
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM");
+      const member = state.members.find(x => x.name === memberId);
+      if(!member) return alert("회원 선택 필요");
+
+      toast("선택 회원 월 생성...");
+      await ensureMemberPeriodsForRange({ member, startYm, endYm, recalc:false });
+      toast("완료");
+    });
+
+    $("btnRecalcRange").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+      const startYm = $("genStart").value.trim();
+      const endYm = $("genEnd").value.trim();
+      const memberId = $("genMember").value;
+      if(!isYm(startYm) || !isYm(endYm)) return alert("범위는 YYYY-MM");
+      const member = state.members.find(x => x.name === memberId);
+      if(!member) return alert("회원 선택 필요");
+
+      toast("재계산 시작...");
+      await ensureMemberPeriodsForRange({ member, startYm, endYm, recalc:true });
+      toast("재계산 완료");
+    });
+
+    // 기타 수입 등록
+    $("btnAddOtherIncome")?.addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+
+      const title = $("otherInTitle").value.trim();
+      const amount = Number($("otherInAmount").value || 0);
+      const dateStr = $("otherInDate").value;
+      const memo = $("otherInMemo").value.trim();
+
+      if(!title) return alert("수입내용을 입력하세요.");
+      if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+      if(!dateStr) return alert("날짜 선택 필요");
+
+      try{
+        const [y,m,d] = dateStr.split("-").map(Number);
+        const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+
+        const txRef = doc(collection(db, colName("transactions")));
+        const txYear = yearOf(date);
+
+        await runTransaction(db, async (t) => {
+          t.set(txRef, {
+            type: "IN",
+            category: "OTHER_INCOME",
+            incomeTitle: title,
+            amount,
+            memo,
+            date,
+            createdByUid: state.user.uid,
+            createdAt: Timestamp.now()
+          });
+
+          bumpYearStatsInTxn(t, txYear, { inDelta: amount });
+        });
+
+        bumpYearStatsLocal(txYear, { inDelta: amount });
+
+        $("otherInTitle").value = "";
+        $("otherInAmount").value = "";
+        $("otherInMemo").value = "";
+        toast("기타 수입 등록 완료");
+        await refreshAll();
+        setTab("dashboard");
+      } catch(e){
+        alert(e?.message || String(e));
+        console.error(e);
+      }
+    });
+
+    // 입금 등록
+    $("btnAddDeposit").addEventListener("click", async () => {
+      if(!state.admin) return alert("총무만 가능합니다.");
+
+      const memberId = $("inMember").value;
+      const amount = Number($("inAmount").value || 0);
+      const memo = $("inMemo").value.trim();
+      const dateStr = $("inDate").value;
+      const mode = $("inMode").value;
+
+      if(!memberId) return alert("입금자를 선택하세요.");
+      if(!amount || amount <= 0) return alert("금액을 확인하세요.");
+      if(!dateStr) return alert("날짜 선택 필요");
+
+      try{
+        // 경조사(EVENT) 모드는 payEventContribution 안에서 거래내역/배정까지 처리합니다.
+        if(mode === "EVENT"){
+          const eventId = $("inEvent")?.value;
+          if(!eventId) return alert("경조사 이벤트를 선택하세요.");
+          await payEventContribution({ eventId, memberId, amount, memo, dateStr });
+                } else {
+          const [y,m,d] = dateStr.split("-").map(Number);
+          const date = Timestamp.fromDate(new Date(y, m-1, d, 12, 0, 0));
+          const txYear = yearOf(date);
+
+          if(mode === "MONTHLY"){
+            const txRef = doc(collection(db, colName("transactions")));
+
+            await runTransaction(db, async (t) => {
+              t.set(txRef, {
+                type: "IN",
+                category: "MONTHLY_FEE",
+                amount,
+                memberId,
+                memberName: memberId,
+                memo,
+                date,
+                createdByUid: state.user.uid,
+                createdAt: Timestamp.now()
+              });
+              bumpYearStatsInTxn(t, txYear, { inDelta: amount });
+            });
+
+            bumpYearStatsLocal(txYear, { inDelta: amount });
+
+            // 기존 로직 그대로
+            await allocateMonthlyFIFO({ memberId, txId: txRef.id, amount });
+
+          } else {
+            // CREDIT 모드: 선수금만 적립 + 거래 기록 + allocations + yearStats를 한 트랜잭션에서 처리
+            const txRef = doc(collection(db, colName("transactions")));
+            const creditRef = doc(db, colName("credits"), memberId);
+            const allocRef = doc(collection(db, colName("allocations")));
+
+            await runTransaction(db, async (t) => {
+              const snap = await t.get(creditRef);
+              const cur = snap.exists() ? Number(snap.data().balance || 0) : 0;
+
+              t.set(txRef, {
+                type: "IN",
+                category: "CREDIT",
+                amount,
+                memberId,
+                memberName: memberId,
+                memo,
+                date,
+                createdByUid: state.user.uid,
+                createdAt: Timestamp.now()
+              });
+
+              t.set(creditRef, { balance: cur + amount }, { merge:true });
+
+              t.set(allocRef, {
+                txId: txRef.id,
+                memberId,
+                targetType: "CREDIT",
+                targetId: memberId,
+                amount,
+                createdAt: Timestamp.now()
+              });
+
+              bumpYearStatsInTxn(t, txYear, { inDelta: amount });
+            });
+
+            bumpYearStatsLocal(txYear, { inDelta: amount });
+          }
+        }
+
+
+        $("inAmount").value = "";
+        $("inMemo").value = "";
+        toast("입금 등록 완료");
+        await refreshAll();
+        setTab("dashboard");
+      } catch(e){
+        alert(e?.message || String(e));
+        console.error(e);
+      }
+    });
+
+    /*********************
+     * 11) 화면 렌더
+     *********************/
+
+    function fillMemberSelects(){
+  const opts = state.members.map(m => `<option value="${escapeHtml(m.name)}">${escapeHtml(m.name)}</option>`).join("");
+  const empty = `<option value="">(선택)</option>`;
+  const emptyMemberStatus = `<option value="">(회원)</option>`;
+  const emptySelf = `<option value="">(경조사 회원 본인)</option>`;
+
+  $("memberSelect").innerHTML = emptyMemberStatus + opts;
+  $("inMember").innerHTML = empty + opts;
+  $("exMember").innerHTML = empty + opts;
+  $("genMember").innerHTML = empty + opts;
+
+  // 지출(경조사) 당사자
+  if($("outTargetMember")) $("outTargetMember").innerHTML = emptySelf + opts;
+
+  // 경조사 이벤트 생성: 본인 선택
+  if($("evTargetMember")) {
+    $("evTargetMember").innerHTML = emptySelf + opts;
+    // change 이벤트는 중복 등록 방지 위해 onchange 사용
+    $("evTargetMember").onchange = () => syncEvExcludeTarget();
+  }
+
+  // 제외 회원 체크리스트
+  renderEvExcludeList();
+  syncEvExcludeTarget();
+}
+
+function renderEvExcludeList(){
+  const host = $("evExcludeList");
+  if(!host) return;
+  if(!state.members || state.members.length === 0){
+    host.innerHTML = `<div class="muted tiny">회원이 없습니다.</div>`;
+    return;
+  }
+
+  host.innerHTML = state.members.map((m, idx) => {
+    const safe = escapeHtml(m.name);
+    return `
+      <label class="checkItem">
+        <input type="checkbox" value="${safe}" />
+        <span>${safe}</span>
+      </label>
+    `;
+  }).join("");
+}
+
+function syncEvExcludeTarget(){
+  const host = $("evExcludeList");
+  if(!host) return;
+  const target = $("evTargetMember")?.value || "";
+  host.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    const isTarget = cb.value === target;
+    if(isTarget){
+      cb.checked = false;
+      cb.disabled = true;
+    } else {
+      cb.disabled = false;
+    }
+  });
+}
+
+function getSelectedEventExcludes(){
+  const host = $("evExcludeList");
+  if(!host) return [];
+  return [...host.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.value);
+}
+
+function clearEventExcludeChecks(){
+  const host = $("evExcludeList");
+  if(!host) return;
+  host.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+  syncEvExcludeTarget();
+}
+
+    function renderMemberList(){
+      if(state.members.length === 0){
+        $("memberList").innerHTML = `<div class="muted">회원이 없습니다. (총무가 회원을 추가하세요)</div>`;
+        return;
+      }
+
+      $("memberList").innerHTML = state.members.map(m => {
+        const ex = Array.isArray(m.exemptions) ? m.exemptions : [];
+        const exHtml = ex.length
+          ? ex.map((x, idx) => {
+              const label = `${escapeHtml(x.from)}~${escapeHtml(x.to)}${x.reason?` (${escapeHtml(x.reason)})`:''}`;
+              const adminBtns = state.admin
+                ? `<button class="linkBtn tiny" data-action="editEx" data-member="${escapeHtml(m.name)}" data-idx="${idx}">수정</button>
+                   <button class="linkBtn tiny danger" data-action="delEx" data-member="${escapeHtml(m.name)}" data-idx="${idx}">삭제</button>`
+                : "";
+              return `<div class="row" style="justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,.08);">
+                        <div class="muted tiny">${label}</div>
+                        <div class="row" style="gap:6px;">${adminBtns}</div>
+                      </div>`;
+            }).join("")
+          : `<div class="muted tiny">없음</div>`;
+
+        const adminActions = state.admin
+          ? `<div class="row" style="gap:8px; justify-content:flex-end;">
+               <button class="linkBtn tiny" data-action="editMember" data-member="${escapeHtml(m.name)}">회원 수정</button>
+               <button class="linkBtn tiny danger" data-action="kickMember" data-member="${escapeHtml(m.name)}">제명(활동종료)</button>
+             </div>`
+          : "";
+
+        return `
+          <div class="tx">
+            <div class="txTop">
+              <div><b>${escapeHtml(m.name)}</b></div>
+              <div class="muted tiny">${escapeHtml(m.activeFrom || "")} ~ ${escapeHtml(m.activeTo || "활동중")}</div>
+            </div>
+            <div class="hr" style="margin:8px 0;"></div>
+            <div class="muted tiny"><b>면제 목록</b></div>
+            <div style="margin-top:6px;">${exHtml}</div>
+            ${adminActions}
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function refreshMembers(){
+      state.members = await loadMembers();
+      fillMemberSelects();
+      renderMemberList();
+    }
+
+    async function refreshConfig(){
+      cachedConfig = await getConfig();
+      renderFeeHistory();
+    }
+
+    async function refreshAll(){
+      await Promise.all([
+        refreshMembers(),
+        refreshConfig(),
+        refreshEvents()
+      ]);
+
+      // ✅ 새해가 되면 자동으로 기초 잔고 이월
+      await ensureOpeningForCurrentYear();
+
+const year = new Date().getFullYear();
+const [recent, ys] = await Promise.all([
+  loadTransactions(),
+  ensureYearStatsBuilt(year)
+]);
+state.tx = recent;
+state.yearStatsCurrent = ys;
+await applyTxView({ force:false });
+renderBalance();
+
+      lastDashboardRefreshAt = Date.now();
+      lastConfigRefreshAt = Date.now();
+
+      // 기본 범위
+      if(!$("rangeStart").value || !$("rangeEnd").value){
+        $("btnQuickRange").click();
+      }
+
+      // 기본 날짜
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth()+1).padStart(2,"0");
+      const dd = String(now.getDate()).padStart(2,"0");
+      if(!$('inDate').value) $('inDate').value = `${yyyy}-${mm}-${dd}`;
+      if($("otherInDate") && !$("otherInDate").value) $("otherInDate").value = `${yyyy}-${mm}-${dd}`;
+      if($("outDate") && !$("outDate").value) $("outDate").value = `${yyyy}-${mm}-${dd}`;
+      if($("evDate") && !$("evDate").value) $("evDate").value = `${yyyy}-${mm}-${dd}`;
+      if($("evPerAmount") && !$("evPerAmount").value) $("evPerAmount").value = "100000";
+      syncInEventUI();
+
+      // 월 생성 기본값 (A 추천: 넉넉)
+      if(!$("genStart").value) $("genStart").value = "2024-01";
+      if(!$("genEnd").value) $("genEnd").value = "2026-12";
+    }
+
+    /*********************
+     * 12) Auth state
+     *********************/
+    onAuthStateChanged(auth, async (user) => {
+      state.user = user;
+      if(!user){
+        lockUI(false);
+        state.admin = false;
+        PRACTICE_MODE = false;
+        localStorage.removeItem("practice_mode");
+        applyRoleBadge();
+        syncAdminLocks();
+        syncPracticeUI();
+        $("userLabel").textContent = "";
+        $("uidLabel").textContent = "";
+        return;
+      }
+
+      lockUI(true);
+      $("userLabel").textContent = user.email || "로그인됨";
+      $("uidLabel").textContent = `UID: ${user.uid}`;
+
+      state.admin = await isAdmin(user.uid);
+
+      // 연습 모드(로컬 저장: 총무 기기 전용)
+      PRACTICE_MODE = !!(state.admin && localStorage.getItem("practice_mode") === "1");
+      if(!state.admin){
+        PRACTICE_MODE = false;
+        localStorage.removeItem("practice_mode");
+      }
+
+      applyRoleBadge();
+      syncAdminLocks();
+      syncPracticeUI();
+
+      await refreshAll();
+      setTab("dashboard");
+      // 경조사(지출) 선택 시 당사자 선택칸 토글 초기화
+      syncOutTargetUI();
+
+      toast(state.admin ? "총무로 로그인" : "회원으로 로그인");
+    });
+
+    // 첫 로드: 잠금 화면 유지
+    lockUI(false);
+  </script>
+</body>
+</html>
